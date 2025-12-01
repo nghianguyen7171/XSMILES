@@ -71,7 +71,7 @@ Torch_molecule/
 ### Model Architectures
 
 #### 1. Baseline MLP (FingerprintMLP)
-- **Input:** Morgan fingerprints (2048-bit ECFP-like)
+- **Input:** Morgan fingerprints (2048-bit ECFP-like) [[1]](#references)
 - **Architecture:** 
   - Input Layer: 2048 → 512
   - Hidden Layer 1: 512 → 256
@@ -79,29 +79,51 @@ Torch_molecule/
   - Output Layer: 128 → 1
 - **Framework:** Pure PyTorch
 - **Training:** Custom training loop with early stopping
+- **Reference:** Extended-Connectivity Fingerprints (ECFP) as introduced by Rogers & Hahn (2010)
 
 #### 2. BFGNN (torch-molecule)
 - **Input:** SMILES strings (automatically converted to graphs)
-- **Architecture:** Graph Neural Network with message passing
+- **Architecture:** Graph Neural Network with message passing [[2, 3]](#references)
 - **Framework:** torch-molecule (sklearn-style API)
 - **Training:** Automated hyperparameter optimization via `autofit()`
+- **Reference:** Based on Graph Convolutional Networks and Message Passing Neural Networks for molecular property prediction
 
 #### 3. GRIN (torch-molecule)
 - **Input:** SMILES strings (graph representation)
-- **Architecture:** Repetition-Invariant Graph Neural Network
+- **Architecture:** Repetition-Invariant Graph Neural Network [[2, 3]](#references)
 - **Framework:** torch-molecule
 - **Training:** Automated hyperparameter optimization
+- **Reference:** Graph Neural Network architecture with repetition-invariant properties for molecular representation
 
 #### 4. SMILESTransformer (torch-molecule)
 - **Input:** SMILES strings (sequence representation)
-- **Architecture:** Transformer-based encoder-decoder
+- **Architecture:** Transformer-based encoder-decoder [[4]](#references)
 - **Framework:** torch-molecule
 - **Training:** Automated hyperparameter optimization
 - **Best Performing Model** ✨
+- **Reference:** Transformer architecture (Vaswani et al., 2017) adapted for SMILES sequence processing
 
 ### ROC and Precision-Recall Curves
 
 ![ROC and PR Curves](output/figures/05_roc_pr_curves.png)
+
+### Model References
+
+Each model used in this project is based on established research in molecular property prediction:
+
+1. **Morgan Fingerprints (ECFP)**: Extended-Connectivity Fingerprints (ECFP) are circular topological fingerprints that capture local molecular substructures. Used in the Baseline MLP model.
+
+2. **Graph Neural Networks**: Graph-based models (BFGNN, GRIN) process molecules as graphs, using message passing to aggregate information from neighboring atoms.
+
+3. **Transformer Architecture**: The SMILESTransformer model leverages the Transformer architecture originally designed for sequence-to-sequence tasks, adapted for molecular SMILES sequences.
+
+4. **ClinTox Dataset**: Part of the MoleculeNet benchmark [[5]](#references) for molecular machine learning.
+
+### Additional References
+
+- **torch-molecule Library**: Available at [https://github.com/liugangcode/torch-molecule](https://github.com/liugangcode/torch-molecule). Provides sklearn-style interfaces for various molecular AI models including BFGNN, GRIN, and SMILESTransformer.
+
+- **Graph Neural Networks for Molecules**: The graph-based models (BFGNN, GRIN) draw inspiration from various GNN architectures designed for molecular property prediction, including Graph Convolutional Networks [[2]](#references) and Message Passing Neural Networks [[3]](#references).
 
 ## Dataset
 
@@ -431,10 +453,29 @@ If you use this code in your research, please cite:
 
 ## References
 
-- **torch-molecule**: [https://github.com/liugangcode/torch-molecule](https://github.com/liugangcode/torch-molecule)
-- **ClinTox Dataset**: MoleculeNet benchmark dataset
-- **RDKit**: [https://www.rdkit.org/](https://www.rdkit.org/)
-- **DeepChem**: [https://deepchem.io/](https://deepchem.io/)
+### Model Papers
+
+[1] **Rogers, D., & Hahn, M.** (2010). Extended-Connectivity Fingerprints. *Journal of Chemical Information and Modeling*, 50(5), 742-754. [DOI: 10.1021/ci100050t](https://pubs.acs.org/doi/10.1021/ci100050t)
+
+[2] **Kipf, T. N., & Welling, M.** (2017). Semi-Supervised Classification with Graph Convolutional Networks. *International Conference on Learning Representations (ICLR)*. [arXiv:1609.02907](https://arxiv.org/abs/1609.02907)
+
+[3] **Gilmer, J., Schoenholz, S. S., Riley, P. F., Vinyals, O., & Dahl, G. E.** (2017). Neural Message Passing for Quantum Chemistry. *International Conference on Machine Learning (ICML)*. [arXiv:1704.01212](https://arxiv.org/abs/1704.01212)
+
+[4] **Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., & Polosukhin, I.** (2017). Attention is All You Need. *Advances in Neural Information Processing Systems (NeurIPS)*. [arXiv:1706.03762](https://arxiv.org/abs/1706.03762)
+
+### Dataset Papers
+
+[5] **Wu, Z., Ramsundar, B., Feinberg, E. N., Gomes, J., Geniesse, C., Pappu, A. S., Leswing, K., & Pande, V.** (2018). MoleculeNet: A Benchmark for Molecular Machine Learning. *Chemical Science*, 9, 513-530. [DOI: 10.1039/C7SC02664A](https://pubs.rsc.org/en/content/articlelanding/2018/sc/c7sc02664a)
+
+**ClinTox Dataset**: The ClinTox dataset is part of the MoleculeNet benchmark, comparing drugs approved by the FDA with drugs that failed clinical trials due to toxicity.
+
+### Libraries and Tools
+
+- **torch-molecule**: [https://github.com/liugangcode/torch-molecule](https://github.com/liugangcode/torch-molecule) - A molecular AI library with sklearn-style interface
+- **RDKit**: [https://www.rdkit.org/](https://www.rdkit.org/) - Open-source cheminformatics toolkit
+- **DeepChem**: [https://deepchem.io/](https://deepchem.io/) - Deep learning library for drug discovery and quantum chemistry
+- **PyTorch**: [https://pytorch.org/](https://pytorch.org/) - Deep learning framework
+- **NetworkX**: [https://networkx.org/](https://networkx.org/) - Network analysis library for graph visualizations
 
 ## License
 
