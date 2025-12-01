@@ -1,0 +1,11 @@
+# torch-scatter and related extensions
+# Install AFTER torch is installed
+#
+# Installation:
+#   macOS: pip3 install -r requirements-torch-extensions.txt
+#   Linux/Colab: pip install -r requirements-torch-extensions.txt
+
+torch-scatter
+torch-geometric
+torch-molecule
+

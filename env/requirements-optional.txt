@@ -1,0 +1,13 @@
+# Optional dependencies
+# Install after base and torch extensions
+#
+# Installation:
+#   macOS: pip3 install -r requirements-optional.txt
+#   Linux/Colab: pip install -r requirements-optional.txt
+
+transformers>=4.20.0
+deepchem
+umap-learn>=0.5.0
+pillow>=8.0.0
+rdkit-pypi  # Note: rdkit is typically better installed via conda
+

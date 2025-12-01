@@ -1,0 +1,28 @@
+name: drug-tox-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11  # torch-molecule requires Python 3.11+
+  - pytorch=2.4.0  # Use 2.4.0 for better wheel compatibility with torch-scatter/torch-geometric
+  - rdkit
+  - numpy<2.0  # NumPy 2.x incompatible with RDKit and some PyG extensions
+  - pandas
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - umap-learn
+  - jupyter
+  - ipykernel
+  - pip
+  # Note: torch-scatter, torch-geometric, and torch-molecule must be installed
+  # separately via the install_torch_molecule.sh script to ensure proper
+  # dependency ordering and wheel compatibility.
+  # Run: ./env/install_torch_molecule.sh after creating the environment
+  # deepchem and pytdc will also be installed by that script
+  - pip:
+    - transformers
+    - pillow  # For image handling in visualization
+    - matplotlib-venn  # For Venn diagrams in visualization
+    - networkx  # For molecular graph structure visualization
+
