@@ -12,37 +12,37 @@ We evaluated 8 models on the ClinTox test set using scaffold-based splitting. Th
 
 | Model | AUC-ROC | Accuracy | F1 Score | AUPRC |
 |-------|---------|----------|----------|-------|
-| Baseline MLP | 0.7167 | 0.9392 | 0.4706 | 0.4497 |
-| GRIN (torch-molecule) | 0.8225 | 0.9459 | 0.4286 | 0.3794 |
-| GIN (PyTorch Geometric) | 0.8638 | **0.9527** | **0.5882** | 0.5034 |
-| GATv2 (PyTorch Geometric) | 0.8848 | 0.8919 | 0.3846 | 0.4664 |
-| DMPNN (DeepChem) | 0.8862 | 0.8667 | 0.3333 | 0.5962 |
-| BFGNN (torch-molecule) | 0.9188 | 0.9392 | 0.1818 | 0.6164 |
-| SMILESTransformer (torch-molecule) | 0.9804 | 0.9662 | 0.7826 | 0.6651 |
-| **SMILESGNN** (PyTorch Geometric) ⭐ | **0.9971** | **0.9797** | **0.8696** | **0.9669** |
+| Baseline MLP | 0.717 | 0.939 | 0.471 | 0.450 |
+| GRIN (torch-molecule) | 0.823 | 0.946 | 0.429 | 0.379 |
+| GIN (PyTorch Geometric) | 0.864 | **0.953** | **0.588** | 0.503 |
+| GATv2 (PyTorch Geometric) | 0.885 | 0.892 | 0.385 | 0.466 |
+| DMPNN (DeepChem) | 0.886 | 0.867 | 0.333 | 0.596 |
+| BFGNN (torch-molecule) | 0.919 | 0.939 | 0.182 | 0.616 |
+| SMILESTransformer (torch-molecule) | 0.980 | 0.966 | 0.783 | 0.665 |
+| **SMILESGNN** (PyTorch Geometric) ⭐ | **0.997** | **0.980** | **0.870** | **0.967** |
 
 *Best values in bold. Results are on the ClinTox test set.*
 
 ### Key Findings
 
 1. **SMILESGNN achieves the best overall performance** across all metrics:
-   - AUC-ROC: 0.9971 (near-perfect ranking)
-   - F1 Score: 0.8696 (best balance of precision and recall)
-   - Accuracy: 0.9797 (high classification accuracy)
-   - AUPRC: 0.9669 (excellent performance on imbalanced data)
+   - AUC-ROC: 0.997 (near-perfect ranking)
+   - F1 Score: 0.870 (best balance of precision and recall)
+   - Accuracy: 0.980 (high classification accuracy)
+   - AUPRC: 0.967 (excellent performance on imbalanced data)
 
 2. **SMILESTransformer is the best single-modality model**:
-   - AUC-ROC: 0.9804
+   - AUC-ROC: 0.980
    - Demonstrates the power of Transformer architectures on SMILES sequences
-   - Second-best F1 score (0.7826)
+   - Second-best F1 score (0.783)
 
 3. **Graph-based models show varying performance**:
-   - GIN achieves the best F1 score (0.5882) among single-modality graph models
+   - GIN achieves the best F1 score (0.588) among single-modality graph models
    - GATv2 and DMPNN achieve competitive AUC-ROC scores
-   - BFGNN has high AUC-ROC (0.9188) but very low F1 (0.1818), indicating poor minority class prediction
+   - BFGNN has high AUC-ROC (0.919) but very low F1 (0.182), indicating poor minority class prediction
 
 4. **Baseline MLP performs poorly**:
-   - Lowest AUC-ROC (0.7167) among all models
+   - Lowest AUC-ROC (0.717) among all models
    - Demonstrates limitations of fingerprint-based approaches
 
 5. **Multimodal fusion provides significant improvement**:
@@ -58,8 +58,8 @@ The Receiver Operating Characteristic (ROC) curves show the trade-off between tr
 ![ROC Curves for All Models](../results/roc_curves_all_models.png)
 
 **Analysis:**
-- SMILESGNN achieves near-perfect ROC performance (AUC-ROC: 0.9971)
-- SMILESTransformer follows closely (AUC-ROC: 0.9804)
+- SMILESGNN achieves near-perfect ROC performance (AUC-ROC: 0.997)
+- SMILESTransformer follows closely (AUC-ROC: 0.980)
 - Graph-based models show moderate performance
 - Baseline MLP has the poorest ROC performance
 
@@ -70,8 +70,8 @@ Precision-Recall (PR) curves are particularly informative for imbalanced dataset
 ![PR Curves for All Models](../results/pr_curves_all_models.png)
 
 **Analysis:**
-- SMILESGNN achieves the highest AUPRC (0.9669)
-- SMILESTransformer shows strong performance (AUPRC: 0.6651)
+- SMILESGNN achieves the highest AUPRC (0.967)
+- SMILESTransformer shows strong performance (AUPRC: 0.665)
 - Graph models show varying performance on PR curves
 - The curves reflect the class imbalance challenge (high precision, varying recall)
 
@@ -231,48 +231,48 @@ The paired visualization reveals several important insights:
 ### Fingerprint-based Models
 
 **Baseline MLP:**
-- **AUC-ROC**: 0.7167 (lowest)
-- **F1 Score**: 0.4706
+- **AUC-ROC**: 0.717 (lowest)
+- **F1 Score**: 0.471
 - **Analysis**: Fixed-length fingerprint vectors lose important structural information, limiting performance
 - **Reference**: Rogers, D., & Hahn, M. (2010). Extended-Connectivity Fingerprints. *Journal of Chemical Information and Modeling*, 50(5), 742-754.
 
 ### Graph-based Models (Single Modality)
 
 **BFGNN (torch-molecule):**
-- **AUC-ROC**: 0.9188 (good ranking)
-- **F1 Score**: 0.1818 (very low)
+- **AUC-ROC**: 0.919 (good ranking)
+- **F1 Score**: 0.182 (very low)
 - **Analysis**: High AUC-ROC but poor minority class prediction, likely due to imbalanced predictions
 - **Reference**: Based on Graph Convolutional Networks (Kipf & Welling, 2017) and Message Passing Neural Networks (Gilmer et al., 2017) adapted for molecular property prediction.
 
 **GRIN (torch-molecule):**
-- **AUC-ROC**: 0.8225
-- **F1 Score**: 0.4286
+- **AUC-ROC**: 0.823
+- **F1 Score**: 0.429
 - **Analysis**: Moderate performance, repetition-invariant property may not be crucial for this task
 - **Reference**: Repetition-Invariant Graph Neural Network architecture, part of the torch-molecule library for molecular AI applications.
 
 **GATv2 (PyTorch Geometric):**
-- **AUC-ROC**: 0.8848
-- **F1 Score**: 0.3846
+- **AUC-ROC**: 0.885
+- **F1 Score**: 0.385
 - **Analysis**: Attention mechanism helps but still limited by single-modality representation
 - **Reference**: Brody, S., Alon, U., & Yahav, E. (2022). How Attentive are Graph Attention Networks? *International Conference on Learning Representations (ICLR)*.
 
 **GIN (PyTorch Geometric):**
-- **AUC-ROC**: 0.8638
-- **F1 Score**: 0.5882 (best among graph-only models)
+- **AUC-ROC**: 0.864
+- **F1 Score**: 0.588 (best among graph-only models)
 - **Analysis**: Best F1 score among graph models, MLP-based message passing is effective
 - **Reference**: Xu, K., Hu, W., Leskovec, J., & Jegelka, S. (2019). How Powerful are Graph Neural Networks? *International Conference on Learning Representations (ICLR)*.
 
 **DMPNN (DeepChem):**
-- **AUC-ROC**: 0.8862
-- **F1 Score**: 0.3333
+- **AUC-ROC**: 0.886
+- **F1 Score**: 0.333
 - **Analysis**: Bond-centric message passing provides good ranking but struggles with minority class
 - **Reference**: Yang, K., et al. (2019). Analyzing Learned Molecular Representations for Property Prediction. *Journal of Chemical Information and Modeling*, 59(8), 3370-3388.
 
 ### Sequence-based Models
 
 **SMILESTransformer (torch-molecule):**
-- **AUC-ROC**: 0.9804 (excellent)
-- **F1 Score**: 0.7826 (second-best)
+- **AUC-ROC**: 0.980 (excellent)
+- **F1 Score**: 0.783 (second-best)
 - **Analysis**: Transformer architecture effectively captures sequential patterns in SMILES, demonstrating the power of sequence models for molecular property prediction
 - **Reference**: 
   - Vaswani, A., et al. (2017). Attention Is All You Need. *Advances in Neural Information Processing Systems (NeurIPS)*.
@@ -281,10 +281,10 @@ The paired visualization reveals several important insights:
 ### Multimodal Models
 
 **SMILESGNN (PyTorch Geometric) ⭐:**
-- **AUC-ROC**: 0.9971 (best)
-- **F1 Score**: 0.8696 (best)
-- **Accuracy**: 0.9797 (best)
-- **AUPRC**: 0.9669 (best)
+- **AUC-ROC**: 0.997 (best)
+- **F1 Score**: 0.870 (best)
+- **Accuracy**: 0.980 (best)
+- **AUPRC**: 0.967 (best)
 - **Analysis**: 
   - Multimodal fusion significantly outperforms single-modality models
   - Attention-based fusion effectively combines sequence and graph information
@@ -300,7 +300,7 @@ The ClinTox dataset has significant class imbalance (11.5:1 ratio). Our results 
 
 1. **Focal Loss Effectiveness**: SMILESGNN, GATv2, and GIN use Focal Loss, achieving better F1 scores
 2. **Accuracy vs F1 Score**: Some models (e.g., BFGNN) achieve high accuracy but low F1, indicating bias toward majority class
-3. **AUPRC Importance**: SMILESGNN's high AUPRC (0.9669) confirms strong performance on imbalanced data
+3. **AUPRC Importance**: SMILESGNN's high AUPRC (0.967) confirms strong performance on imbalanced data
 4. **Weighted Sampling**: Balanced mini-batches during training help models learn from minority class
 
 ## Model Comparison Insights
@@ -323,10 +323,10 @@ The ClinTox dataset has significant class imbalance (11.5:1 ratio). Our results 
 ## Statistical Significance
 
 Given the test set size (148 samples) and class distribution:
-- **SMILESGNN**: 148 predictions, 97.97% accuracy
+- **SMILESGNN**: 148 predictions, 98.0% accuracy
   - Only 3 incorrect predictions out of 148
   - Extremely low error rate demonstrates strong generalization
-- **SMILESTransformer**: 148 predictions, 96.62% accuracy
+- **SMILESTransformer**: 148 predictions, 96.6% accuracy
   - 5 incorrect predictions
   - Still excellent performance for single-modality model
 
