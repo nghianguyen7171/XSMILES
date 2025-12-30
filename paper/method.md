@@ -263,6 +263,10 @@ Mean-Max Pooling (concatenated)
   → (batch, 576)  [288 × 2]
   ↓
 Output: Graph Representation (batch, 576)
+
+**Final Graph Representation Dimension:**
+- After GNN layers with JK (concatenation): 96 × 3 layers = 288
+- After Mean-Max pooling: 288 × 2 = 576
 ```
 
 **Key Components:**
@@ -283,6 +287,7 @@ Input: SMILES Repr (batch, 96)
   ↓
 Project Graph: Linear(576 → 96)
   → Graph Repr Proj (batch, 96)
+  ↓
   ↓
 Expand Dimensions:
   - SMILES: (batch, 1, 96)
