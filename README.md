@@ -443,9 +443,15 @@ Comparison across diverse molecular structures showing prediction differences:
 
 ### SMILESGNN Molecular Graph Visualization
 
-The SMILESGNN model processes molecules as graphs where atoms are nodes and bonds are edges, combining this structural information with SMILES sequence patterns:
+The SMILESGNN model combines two complementary representations of molecules:
+- **SMILES Sequence** (left): Processed by the Transformer encoder to capture sequential patterns
+- **Graph Structure** (right): Processed by the GNN encoder where atoms are nodes and bonds are edges
 
-![SMILESGNN Molecular Graphs](results/smilesgnn_molecular_graphs.png)
+The following visualizations demonstrate how SMILESGNN understands and learns the characteristic structure of molecules through both representations. Four diverse samples show the correspondence between SMILES sequences and their graph structures:
+
+![SMILESGNN SMILES-Graph Pairs](results/smilesgnn_smiles_graph_pairs.png)
+
+Each row shows one molecule in both representations, demonstrating how SMILESGNN leverages both the sequential patterns in SMILES strings and the explicit structural connectivity in graph representations for superior molecular understanding.
 
 ## Key Features
 
