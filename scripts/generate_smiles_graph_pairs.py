@@ -182,9 +182,10 @@ def visualize_smiles_graph_pairs(smiles_list, labels, predictions, n_samples=4):
                     break
     
     # Create figure: 4 rows (samples) x 2 columns (SMILES + Graph)
+    # Adjust top margin to accommodate title and subtitle
     fig = plt.figure(figsize=(14, 16))
     gs = fig.add_gridspec(n_samples, 2, hspace=0.3, wspace=0.2,
-                         left=0.05, right=0.95, top=0.96, bottom=0.04)
+                         left=0.05, right=0.95, top=0.94, bottom=0.04)
     
     for row, data_idx in enumerate(sample_indices):
         smiles = smiles_list[data_idx]
@@ -206,12 +207,17 @@ def visualize_smiles_graph_pairs(smiles_list, labels, predictions, n_samples=4):
         title_graph = f"Graph Representation\n(Nodes=Atoms, Edges=Bonds)"
         visualize_molecular_graph(G, mol, ax_graph, title=title_graph)
     
-    fig.suptitle('SMILESGNN: Understanding Molecules Through Sequence and Graph\n'
-                 'Left: SMILES Sequence (How Transformer Encoder Sees It) | '
-                 'Right: Graph Structure (How GNN Encoder Sees It)',
-                fontsize=14, fontweight='bold', y=0.99)
+    # Add title and subtitle with proper spacing
+    fig.suptitle('SMILESGNN: Understanding Molecules Through Sequence and Graph',
+                fontsize=15, fontweight='bold', y=0.988)
     
-    plt.tight_layout()
+    # Add subtitle separately with smaller font and wrap text if needed
+    subtitle = ('Left: SMILES Sequence (Transformer Encoder) | '
+                'Right: Graph Structure (GNN Encoder)')
+    fig.text(0.5, 0.965, subtitle,
+             ha='center', va='top', fontsize=11, style='italic')
+    
+    plt.tight_layout(rect=[0, 0, 1, 0.96])  # Leave space at top for titles
     return fig
 
 
