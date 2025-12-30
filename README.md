@@ -84,6 +84,10 @@ Torch_molecule/
 
 ## Models and Results
 
+### Performance Summary
+
+**SMILESGNN** achieves the best overall performance (AUC-ROC: 0.9971, F1: 0.8696) by combining sequence and graph representations through multimodal fusion. **SMILESTransformer** follows closely as the best single-modality model (AUC-ROC: 0.9804, F1: 0.7826), demonstrating the power of transformer architectures on SMILES sequences.
+
 ### Model Performance Comparison
 
 Models sorted by AUC-ROC (lowest to highest):
@@ -405,21 +409,41 @@ Confusion matrices and error overlap analysis:
 
 ![Error Overlap](output/figures/05_error_overlap_venn.png)
 
-### Prediction Samples
+### Top 2 Models Comparison: SMILESTransformer vs SMILESGNN
 
-Examples of correct and incorrect predictions from representative models:
+Direct comparison of the two best-performing models on the same molecules:
 
-![Correct Toxic Predictions](results/sample_representative_models_correct_toxic.png)
+#### Both Models Correct
 
-![Correct Non-toxic Predictions](results/sample_representative_models_correct_nontoxic.png)
+Both SMILESTransformer and SMILESGNN correctly predict toxic compounds:
 
-![Model Disagreements](results/sample_representative_models_disagreement.png)
+![Both Correct - Toxic](results/top2_comparison_both_correct_toxic.png)
 
-![Diverse Molecular Structures](results/sample_representative_models_diverse.png)
+Both models correctly predict non-toxic compounds:
+
+![Both Correct - Non-toxic](results/top2_comparison_both_correct_nontoxic.png)
+
+#### SMILESGNN Advantages
+
+Cases where SMILESGNN is correct but SMILESTransformer is wrong - demonstrating the multimodal fusion advantage:
+
+![SMILESGNN Wins](results/top2_comparison_smilesgnn_wins.png)
+
+#### SMILESTransformer Advantages  
+
+Cases where SMILESTransformer is correct but SMILESGNN is wrong:
+
+![SMILESTransformer Wins](results/top2_comparison_smilestransformer_wins.png)
+
+#### Diverse Molecular Structures
+
+Comparison across diverse molecular structures showing prediction differences:
+
+![Diverse Comparison](results/top2_comparison_diverse.png)
 
 ### SMILESGNN Molecular Graph Visualization
 
-The SMILESGNN model processes molecules as graphs where atoms are nodes and bonds are edges:
+The SMILESGNN model processes molecules as graphs where atoms are nodes and bonds are edges, combining this structural information with SMILES sequence patterns:
 
 ![SMILESGNN Molecular Graphs](results/smilesgnn_molecular_graphs.png)
 
