@@ -70,37 +70,14 @@ def get_node_color(atomic_num):
 
 
 def visualize_smiles_sequence(smiles, ax, title="SMILES Sequence"):
-    """Visualize SMILES sequence as text with molecular structure."""
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        ax.text(0.5, 0.5, f"Invalid SMILES:\n{smiles}", 
-               ha='center', va='center', transform=ax.transAxes,
-               fontsize=12, family='monospace',
-               bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.5))
-        ax.axis('off')
-        return
-    
-    # Draw molecule using RDKit
-    try:
-        img = Draw.MolToImage(mol, size=(500, 500))
-        ax.imshow(img)
-    except:
-        # Fallback to text if rendering fails
-        ax.text(0.5, 0.8, "SMILES:", ha='center', va='top', transform=ax.transAxes,
-               fontsize=14, fontweight='bold')
-        ax.text(0.5, 0.6, smiles, ha='center', va='center', transform=ax.transAxes,
-               fontsize=11, family='monospace',
-               bbox=dict(boxstyle='round', facecolor='white', edgecolor='black', pad=10))
-        ax.axis('off')
-        return
-    
-    # Add SMILES text below molecule
-    ax.text(0.5, 0.02, f"SMILES: {smiles}", ha='center', va='bottom', 
-           transform=ax.transAxes, fontsize=10, family='monospace',
+    """Visualize SMILES sequence as text only (no molecular structure)."""
+    # Display SMILES text centered
+    ax.text(0.5, 0.5, smiles, ha='center', va='center', transform=ax.transAxes,
+           fontsize=14, family='monospace', fontweight='bold',
            bbox=dict(boxstyle='round', facecolor='white', edgecolor='black', 
-                    alpha=0.9, pad=5))
+                    linewidth=2, pad=15))
     
-    ax.set_title(title, fontsize=12, fontweight='bold', pad=10)
+    ax.set_title(title, fontsize=12, fontweight='bold', pad=15)
     ax.axis('off')
 
 
