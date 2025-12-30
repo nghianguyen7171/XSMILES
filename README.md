@@ -12,8 +12,12 @@ This project implements multiple deep learning approaches for clinical drug toxi
 - **BFGNN (torch-molecule)** - Graph Neural Network for molecular property prediction
 - **GRIN (torch-molecule)** - Repetition-Invariant Graph Neural Network
 - **SMILESTransformer (torch-molecule)** - Transformer-based model on SMILES sequences
+- **DMPNN (DeepChem)** - Directed Message Passing Neural Network
+- **GATv2 (PyTorch Geometric)** - Graph Attention Network v2
+- **GIN (PyTorch Geometric)** - Graph Isomorphism Network
+- **SMILESGNN (PyTorch Geometric)** ⭐ - Multimodal model combining SMILES and graph representations
 
-The project includes comprehensive explainability methods, error analysis, and embedding visualizations.
+The project includes comprehensive explainability methods, error analysis, embedding visualizations, and consolidated results.
 
 **Main Library:** [torch-molecule](https://github.com/liugangcode/torch-molecule) - A molecular AI library with sklearn-style interface
 
@@ -34,6 +38,7 @@ Torch_molecule/
 │   ├── 03_training_gnn.ipynb               # Train BFGNN model
 │   ├── 03_training_grin.ipynb              # Train GRIN model
 │   ├── 03_training_smilestransformer.ipynb # Train SMILESTransformer model
+│   ├── 03_training_deepchem_gcn.ipynb      # Train DMPNN model
 │   ├── 04_explainability_and_visualization.ipynb  # Model explanations
 │   ├── 05_results_and_error_analysis.ipynb        # Comprehensive analysis
 │   └── 06_representation.ipynb                     # Feature representation visualization
@@ -46,7 +51,31 @@ Torch_molecule/
 │   ├── explain.py               # Attribution methods
 │   ├── viz.py                   # RDKit visualization
 │   ├── utils.py                 # Utilities (seed, config, metrics)
-│   └── pipelines.py             # High-level training/evaluation pipelines
+│   ├── pipelines.py             # High-level training/evaluation pipelines
+│   ├── graph_data.py            # PyTorch Geometric data conversion
+│   ├── graph_models.py          # GATv2 model architecture
+│   ├── graph_models_gin.py      # GIN model architecture
+│   ├── graph_models_hybrid.py   # SMILESGNN multimodal model
+│   ├── graph_train.py           # Training infrastructure for PyG models
+│   └── smiles_tokenizer.py      # SMILES tokenization for sequence models
+├── scripts/
+│   ├── train_gatv2.py           # GATv2 model training script
+│   ├── train_gin.py             # GIN model training script
+│   ├── train_hybrid.py          # SMILESGNN model training script
+│   ├── consolidate_results.py   # Consolidate metrics from all models
+│   ├── generate_curves.py       # Generate ROC and PR curves
+│   ├── generate_sample_visualizations.py  # Sample prediction visualizations
+│   └── generate_smilesgnn_graph_visualization.py  # Molecular graph visualization
+├── config/
+│   ├── gatv2_config.yaml        # GATv2 model configuration
+│   ├── gin_config.yaml          # GIN model configuration
+│   └── smilesgnn_config.yaml    # SMILESGNN model configuration
+├── results/                     # Consolidated results directory
+│   ├── overall_results.csv      # All models performance comparison
+│   ├── overall_results.md       # Markdown table of results
+│   ├── roc_curves_all_models.png
+│   ├── pr_curves_all_models.png
+│   └── sample_representative_models_*.png
 ├── data/                        # Dataset cache (created at runtime)
 ├── models/                      # Saved models (created at runtime)
 └── output/
@@ -57,14 +86,20 @@ Torch_molecule/
 
 ### Model Performance Comparison
 
-| Model | AUC-ROC | Accuracy | F1 Score | PR-AUC |
-|-------|---------|----------|----------|--------|
-| **Baseline MLP** | 0.7167 | 0.9392 | 0.4706 | 0.4497 |
-| **BFGNN** | 0.9188 | 0.9392 | 0.1818 | 0.6164 |
-| **GRIN** | 0.8225 | 0.9459 | 0.4286 | 0.3794 |
-| **SMILESTransformer** | **0.9804** | **0.9662** | **0.7826** | **0.6651** |
+Models sorted by AUC-ROC (lowest to highest):
 
-*Note: Results are on the test set. SMILESTransformer achieves the best overall performance.*
+| Model | AUC-ROC | Accuracy | F1 Score | AUPRC |
+|-------|---------|----------|----------|-------|
+| Baseline MLP | 0.7167 | 0.9392 | 0.4706 | 0.4497 |
+| GRIN (torch-molecule) | 0.8225 | 0.9459 | 0.4286 | 0.3794 |
+| GIN (PyTorch Geometric) | 0.8638 | **0.9527** | **0.5882** | 0.5034 |
+| GATv2 (PyTorch Geometric) | 0.8848 | 0.8919 | 0.3846 | 0.4664 |
+| DMPNN (DeepChem) | 0.8862 | 0.8667 | 0.3333 | 0.5962 |
+| BFGNN (torch-molecule) | 0.9188 | 0.9392 | 0.1818 | 0.6164 |
+| SMILESTransformer (torch-molecule) | 0.9804 | 0.9662 | 0.7826 | 0.6651 |
+| **SMILESGNN** (PyTorch Geometric) ⭐ | **0.9971** | **0.9797** | **0.8696** | **0.9669** |
+
+*Best values in bold. Results are on the ClinTox test set. SMILESGNN achieves the best overall performance by combining sequence and graph representations.*
 
 ![Model Performance Comparison](output/figures/05_model_performance_comparison.png)
 
@@ -100,12 +135,57 @@ Torch_molecule/
 - **Architecture:** Transformer-based encoder-decoder [[4]](#references)
 - **Framework:** torch-molecule
 - **Training:** Automated hyperparameter optimization
-- **Best Performing Model** ✨
 - **Reference:** Transformer architecture (Vaswani et al., 2017) adapted for SMILES sequence processing
+
+#### 5. DMPNN (DeepChem)
+- **Input:** GraphData objects (DMPNN featurization with bond features)
+- **Architecture:** Directed Message Passing Neural Network
+- **Framework:** DeepChem
+- **Training:** Custom training loop with DeepChem Dataset
+- **Reference:** Directed Message Passing Neural Network for molecular property prediction
+
+#### 6. GATv2 (PyTorch Geometric)
+- **Input:** PyTorch Geometric Data objects (25 node features, 17 edge features)
+- **Architecture:** 
+  - GATv2 layers (4 layers, 4 heads, 128 hidden dim)
+  - Jumping Knowledge connections
+  - Set2Set pooling
+  - MLP predictor head
+- **Framework:** PyTorch Geometric
+- **Training:** Focal loss with weighted sampling
+- **Reference:** Graph Attention Network v2 with dynamic attention mechanism
+
+#### 7. GIN (PyTorch Geometric)
+- **Input:** PyTorch Geometric Data objects (25 node features, 17 edge features)
+- **Architecture:** 
+  - GIN layers (4 layers, MLP-based message passing, 128 hidden dim)
+  - Learnable epsilon parameter
+  - Jumping Knowledge connections
+  - Mean-Max pooling
+  - MLP predictor head
+- **Framework:** PyTorch Geometric
+- **Training:** Focal loss with weighted sampling
+- **Reference:** Graph Isomorphism Network (provably as powerful as Weisfeiler-Lehman test)
+
+#### 8. SMILESGNN (PyTorch Geometric) ⭐
+- **Input:** 
+  - Graph: PyTorch Geometric Data objects with rich node/edge features
+  - SMILES: Tokenized SMILES sequences
+- **Architecture:** 
+  - **Graph Encoder:** GATv2 layers with Jumping Knowledge and Mean-Max pooling
+  - **SMILES Encoder:** Transformer encoder with positional encoding
+  - **Fusion Module:** Attention-based fusion combining sequence and graph representations
+  - **Predictor:** MLP head with batch norm and dropout
+- **Framework:** PyTorch Geometric + PyTorch Transformer
+- **Training:** Focal loss with weighted sampling, enhanced regularization
+- **Best Performing Model** ✨
+- **Reference:** Multimodal fusion architecture combining sequence (SMILES Transformer) and graph (GATv2/GIN) representations via attention mechanism
 
 ### ROC and Precision-Recall Curves
 
-![ROC and PR Curves](output/figures/05_roc_pr_curves.png)
+![ROC Curves](results/roc_curves_all_models.png)
+
+![PR Curves](results/pr_curves_all_models.png)
 
 ### Model References
 
@@ -224,11 +304,20 @@ Execute notebooks in the following sequence:
    - Evaluate on validation and test sets
    - Save model and metrics
 
-4. **03_training_gnn.ipynb** / **03_training_grin.ipynb** / **03_training_smilestransformer.ipynb**
-   - Train torch-molecule models (BFGNN, GRIN, or SMILESTransformer)
+4. **03_training_gnn.ipynb** / **03_training_grin.ipynb** / **03_training_smilestransformer.ipynb** / **03_training_deepchem_gcn.ipynb**
+   - Train torch-molecule models (BFGNN, GRIN, SMILESTransformer)
+   - Train DeepChem DMPNN model
    - Automated hyperparameter optimization
    - Model comparison and evaluation
    - Save trained models
+
+**Alternatively, use training scripts for PyTorch Geometric models:**
+- `scripts/train_gatv2.py` - Train GATv2 model
+- `scripts/train_gin.py` - Train GIN model  
+- `scripts/train_hybrid.py` - Train SMILESGNN multimodal model
+- `scripts/consolidate_results.py` - Consolidate metrics from all models
+- `scripts/generate_curves.py` - Generate ROC and PR curves
+- `scripts/generate_sample_visualizations.py` - Generate sample prediction visualizations
 
 5. **04_explainability_and_visualization.ipynb**
    - Generate model explanations for all models
@@ -338,13 +427,18 @@ Examples of correct and incorrect predictions:
 ### Models
 - **Baseline:** Custom PyTorch MLP on fingerprint features
 - **torch-molecule:** BFGNN, GRIN, SMILESTransformer with sklearn-style API
-- Automated hyperparameter optimization via Optuna
+- **DeepChem:** DMPNN model with GraphData featurization
+- **PyTorch Geometric:** GATv2, GIN, SMILESGNN with custom architectures
+- Automated hyperparameter optimization via Optuna (for torch-molecule models)
+- Custom training loops with Focal Loss and weighted sampling (for PyG models)
 
 ### Explainability
 - **Gradient-based attribution:** For fingerprint-based models (MLP)
-- **Perturbation-based attribution:** For graph/sequence-based models (GNNs, SMILESTransformer)
+- **Perturbation-based attribution:** For graph/sequence-based models (GNNs, SMILESTransformer, DMPNN)
 - Atom-level importance mapping
 - RDKit-based molecular visualization with importance coloring
+- Sample prediction visualizations comparing all models
+- Molecular graph structure visualizations
 
 ### Visualization
 - 2D molecule drawings with atom-level importance heatmaps
@@ -394,20 +488,25 @@ See `env/environment.yml` for full list. Key dependencies:
 
 ## Results Summary
 
-### Best Model: SMILESTransformer
+See `results/README.md` for detailed results and `results/overall_results.csv` for the complete comparison table.
 
-The SMILESTransformer model achieves the best performance across all metrics:
-- **AUC-ROC: 0.9804** (excellent discriminative ability)
-- **Accuracy: 0.9662** (high overall accuracy)
-- **F1 Score: 0.7826** (best balance for imbalanced dataset)
-- **PR-AUC: 0.6651** (strong precision-recall performance)
+### Best Model: SMILESGNN
+
+The SMILESGNN multimodal model achieves the best performance across all metrics:
+- **AUC-ROC: 0.9971** (excellent discriminative ability)
+- **Accuracy: 0.9797** (high overall accuracy)
+- **F1 Score: 0.8696** (excellent balance for imbalanced dataset)
+- **AUPRC: 0.9669** (strong precision-recall performance)
 
 ### Key Findings
 
-1. **Sequence-based models (SMILESTransformer)** outperform graph-based models on this task
-2. **Graph-based models (BFGNN, GRIN)** show strong performance and provide interpretable graph structures
-3. **Baseline MLP** provides a simple baseline but is outperformed by more sophisticated architectures
-4. **Class imbalance** affects F1 scores, but PR-AUC provides better insight for this dataset
+1. **Multimodal fusion (SMILESGNN)** achieves the best performance by combining sequence and graph representations
+2. **Sequence-based models (SMILESTransformer)** achieve best single-modality performance (AUC-ROC: 0.9804, F1: 0.7826)
+3. **Graph-based models** show competitive performance:
+   - **GIN** has the best F1 (0.5882) among single-modality graph models
+   - **BFGNN** and **DMPNN** show strong AUC-ROC but struggle with F1 due to class imbalance
+4. **Baseline MLP** provides a simple baseline but is outperformed by more sophisticated architectures
+5. Class imbalance handling (Focal Loss, weighted sampling) is crucial for minority class prediction
 
 ### Model Agreement
 
