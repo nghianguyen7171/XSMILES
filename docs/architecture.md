@@ -10,6 +10,131 @@ SMILESGNN combines two complementary molecular representations:
 
 The model uses an attention-based fusion mechanism to combine both representations, achieving superior performance compared to either representation alone.
 
+## Data Flow: From Raw SMILES to Model Inputs
+
+The architecture starts with **raw SMILES strings** (e.g., "CCO", "CCN") from the dataset. Each SMILES string is processed through **two parallel pipelines** to create the dual inputs required by SMILESGNN:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    Raw Data: SMILES String                                   │
+│                    Example: "CCO" (ethanol)                                 │
+└────────────────────────────┬──────────────────────────────────────────────┘
+                              │
+                ┌─────────────┴─────────────┐
+                │                           │
+                ▼                           ▼
+    ┌───────────────────────┐   ┌───────────────────────┐
+    │  Pipeline 1:          │   │  Pipeline 2:          │
+    │  SMILES Sequence      │   │  Molecular Graph      │
+    │  Processing           │   │  Processing           │
+    └───────────────────────┘   └───────────────────────┘
+                │                           │
+                ▼                           ▼
+    ┌───────────────────────┐   ┌───────────────────────┐
+    │  SMILESTokenizer      │   │  RDKit                 │
+    │  - Tokenize:          │   │  - Parse SMILES        │
+    │    "CCO" →            │   │  - Create Molecule     │
+    │    ["C","C","O"]      │   │    object              │
+    │  - Encode to IDs      │   │                        │
+    │  - Create masks       │   │  - Extract atoms       │
+    │                        │   │  - Extract bonds      │
+    └───────────┬───────────┘   └───────────┬───────────┘
+                │                           │
+                ▼                           ▼
+    ┌───────────────────────┐   ┌───────────────────────┐
+    │  Output:              │   │  Output:               │
+    │  - Token IDs          │   │  - Node Features       │
+    │    (batch, seq_len)   │   │    (num_nodes, 25)     │
+    │  - Attention Mask     │   │  - Edge Features       │
+    │    (batch, seq_len)   │   │    (num_edges, 17)     │
+    │                       │   │  - Edge Index          │
+    │                       │   │    (2, num_edges)      │
+    └───────────────────────┘   └───────────────────────┘
+                │                           │
+                └───────────┬───────────────┘
+                            │
+                            ▼
+                ┌───────────────────────┐
+                │  SMILESGNN Model       │
+                │  (Dual Input)          │
+                └───────────────────────┘
+```
+
+### Pipeline 1: SMILES Sequence Processing
+
+**Input:** Raw SMILES string (e.g., "CCO")
+
+**Steps:**
+1. **Tokenization** (`SMILESTokenizer._tokenize_smiles()`)
+   - Breaks SMILES into tokens using regex patterns
+   - Example: "CCO" → ["C", "C", "O"]
+   - Handles special patterns: rings, bonds, branching, aromatic atoms
+
+2. **Vocabulary Mapping** (`SMILESTokenizer.encode()`)
+   - Maps tokens to integer IDs using learned vocabulary
+   - Adds special tokens: `<SOS>`, `<EOS>`, `<PAD>`, `<UNK>`
+   - Example: ["C", "C", "O"] → [id_C, id_C, id_O]
+
+3. **Padding/Truncation**
+   - Pads sequences to `max_length=128`
+   - Creates attention mask (1 for real tokens, 0 for padding)
+
+**Output:**
+- `token_ids`: `(batch_size, seq_len)` - Integer token IDs
+- `attention_mask`: `(batch_size, seq_len)` - Mask for valid tokens
+
+**Implementation:** `src/smiles_tokenizer.py`
+
+### Pipeline 2: Molecular Graph Processing
+
+**Input:** Raw SMILES string (e.g., "CCO")
+
+**Steps:**
+1. **SMILES Parsing** (`smiles_to_mol()`)
+   - Uses RDKit to parse SMILES into molecule object
+   - Validates and sanitizes molecular structure
+
+2. **Node Feature Extraction** (`get_atom_features()`)
+   - Extracts 25 features per atom:
+     - Atomic number (one-hot, 10 dims: C, N, O, F, P, S, Cl, Br, I, Other)
+     - Formal charge (1 dim)
+     - Hybridization (one-hot, 5 dims: SP, SP2, SP3, SP3D, SP3D2)
+     - Chirality (one-hot, 3 dims)
+     - Ring membership (1 dim)
+     - Aromaticity (1 dim)
+     - Number of heavy atom neighbors (1 dim)
+     - Number of hydrogen neighbors (1 dim)
+     - Valence minus attached hydrogens (1 dim)
+     - Degree (1 dim)
+
+3. **Edge Feature Extraction** (`get_bond_features()`)
+   - Extracts 17 features per bond:
+     - Bond type (one-hot, 4 dims: single, double, triple, aromatic)
+     - Bond direction (one-hot, 5 dims)
+     - Ring membership (1 dim)
+     - Conjugation (1 dim)
+     - Stereochemistry (one-hot, 6 dims)
+
+4. **Edge Index Construction**
+   - Creates connectivity matrix in COO format
+   - Each bond creates two edges (undirected graph)
+   - Shape: `(2, num_edges)`
+
+**Output:**
+- `x`: `(num_nodes, 25)` - Node (atom) feature matrix
+- `edge_index`: `(2, num_edges)` - Edge connectivity
+- `edge_attr`: `(num_edges, 17)` - Edge (bond) feature matrix
+
+**Implementation:** `src/graph_data.py`
+
+### Key Insight
+
+Both pipelines process the **same SMILES string** but create different representations:
+- **Sequence representation**: Linear order of tokens (captures sequential patterns)
+- **Graph representation**: Explicit atom-atom connections (captures structural patterns)
+
+This dual representation enables SMILESGNN to leverage both sequential and structural information.
+
 ## Architecture Diagram
 
 ```
