@@ -1,0 +1,32 @@
+model:
+  name: "GATv2MolecularPredictor"
+  num_layers: 4
+  hidden_dim: 128
+  num_heads: 4
+  dropout: 0.2
+  use_residual: true
+  use_jk: true
+  jk_mode: "cat"  # cat, max, mean, lstm
+  pooling: "set2set"  # set2set, attentive, global_mean, global_max, global_sum
+
+training:
+  num_epochs: 100
+  batch_size: 32
+  learning_rate: 0.001
+  weight_decay: 0.00001
+  early_stopping_patience: 20
+  early_stopping_metric: "f1"  # f1, auc_roc, loss
+  loss_type: "focal"  # focal, weighted_bce, bce
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+  use_weighted_sampler: true
+
+data:
+  cache_dir: "./data"
+  split_type: "scaffold"
+  seed: 42
+
+output:
+  model_dir: "./models/gatv2_model"
+  save_best: true
+

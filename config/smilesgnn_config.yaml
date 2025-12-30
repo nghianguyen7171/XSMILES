@@ -1,0 +1,41 @@
+model:
+  name: "SMILESGraphHybridPredictor"
+  num_graph_layers: 3  # Reduced from 4 to 3 to reduce complexity
+  hidden_dim: 96  # Reduced from 128 to 96 to reduce model size
+  graph_model: "gatv2"  # gatv2 or gin
+  num_heads: 4  # For GATv2
+  dropout: 0.4  # Increased from 0.2 to 0.4 for better regularization
+  use_residual: true
+  use_jk: true
+  jk_mode: "cat"  # cat, max, mean, lstm
+  graph_pooling: "meanmax"  # mean, max, sum, meanmax
+  
+  # SMILES encoder settings
+  smiles_vocab_size: 100
+  smiles_max_length: 128
+  smiles_d_model: 96  # Reduced from 128 to 96 to match graph encoder
+  smiles_num_layers: 2  # Reduced from 3 to 2 to reduce complexity
+  
+  # Fusion settings
+  fusion_method: "attention"  # concat, attention, weighted
+
+training:
+  num_epochs: 100
+  batch_size: 32
+  learning_rate: 0.0005  # Reduced from 0.001 for more stable training
+  weight_decay: 0.0001  # Increased from 0.00001 for stronger L2 regularization
+  early_stopping_patience: 15  # Reduced from 20 to stop earlier
+  early_stopping_metric: "f1"  # f1, auc_roc, loss
+  loss_type: "focal"  # focal, weighted_bce, bce
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+  use_weighted_sampler: true
+
+data:
+  cache_dir: "data"
+  split_type: "scaffold"
+  seed: 42
+
+output:
+  model_dir: "models/smilesgnn_model"
+

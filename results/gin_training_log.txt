@@ -1,0 +1,58 @@
+No normalization for SPS. Feature removed!
+No normalization for AvgIpc. Feature removed!
+Skipped loading some Tensorflow models, missing a dependency. No module named 'tensorflow'
+Skipped loading modules with pytorch-geometric dependency, missing a dependency. No module named 'dgl'
+Skipped loading modules with pytorch-lightning dependency, missing a dependency. No module named 'lightning'
+Skipped loading some Jax models, missing a dependency. No module named 'jax'
+Skipped loading some PyTorch models, missing a dependency. No module named 'tensorflow'
+
+======================================================================
+GIN Molecular Property Prediction - Training
+======================================================================
+Device: cpu
+Configuration: /Users/nguyennghia/PROJECT/Torch_molecule/config/gin_config.yaml
+
+Loading ClinTox dataset...
+Train: 1184, Val: 148, Test: 148
+Class distribution - Train: Toxic=95.0, Non-toxic=1089.0
+
+Converting SMILES to graph representations...
+Train graphs: 1184, Val graphs: 148, Test graphs: 148
+Node features: 25, Edge features: 17
+
+Creating data loaders...
+Using weighted sampler for balanced training
+
+Creating GIN model...
+Model parameters: 574,601
+
+======================================================================
+Training Model
+======================================================================
+Epoch 10/100 - Train Loss: 0.0363, Val Loss: 0.2434, Val AUC-ROC: 0.9362, Val F1: 0.3636
+Epoch 20/100 - Train Loss: 0.0257, Val Loss: 0.1315, Val AUC-ROC: 0.9392, Val F1: 0.6000
+Epoch 30/100 - Train Loss: 0.0165, Val Loss: 0.1577, Val AUC-ROC: 0.9149, Val F1: 0.6667
+Epoch 40/100 - Train Loss: 0.0145, Val Loss: 0.1335, Val AUC-ROC: 0.9493, Val F1: 0.7273
+Early stopping at epoch 44
+
+======================================================================
+Evaluating on Test Set
+======================================================================
+Test Metrics:
+  Loss: 0.1758
+  AUC-ROC: 0.8638
+  Accuracy: 0.9527
+  F1 Score: 0.5882
+  PR-AUC: 0.5034
+  Confusion Matrix:
+    TN=136, FP=2
+    FN=5, TP=5
+
+Model saved to: /Users/nguyennghia/PROJECT/Torch_molecule/models/gin_model/best_model.pt
+Metrics saved to: /Users/nguyennghia/PROJECT/Torch_molecule/models/gin_model/gin_model_metrics.txt
+Training curves saved to: /Users/nguyennghia/PROJECT/Torch_molecule/models/gin_model/training_curves.png
+
+======================================================================
+Training Complete!
+======================================================================
+

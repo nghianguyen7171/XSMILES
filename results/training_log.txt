@@ -1,0 +1,61 @@
+No normalization for SPS. Feature removed!
+No normalization for AvgIpc. Feature removed!
+Skipped loading some Tensorflow models, missing a dependency. No module named 'tensorflow'
+Skipped loading modules with pytorch-geometric dependency, missing a dependency. No module named 'dgl'
+Skipped loading modules with pytorch-lightning dependency, missing a dependency. No module named 'lightning'
+Skipped loading some Jax models, missing a dependency. No module named 'jax'
+Skipped loading some PyTorch models, missing a dependency. No module named 'tensorflow'
+
+======================================================================
+GATv2 Molecular Property Prediction - Training
+======================================================================
+Device: cpu
+Configuration: /Users/nguyennghia/PROJECT/Torch_molecule/config/gatv2_config.yaml
+
+Loading ClinTox dataset...
+Train: 1184, Val: 148, Test: 148
+Class distribution - Train: Toxic=95.0, Non-toxic=1089.0
+
+Converting SMILES to graph representations...
+Train graphs: 1184, Val graphs: 148, Test graphs: 148
+Node features: 25, Edge features: 17
+
+Creating data loaders...
+Using weighted sampler for balanced training
+
+Creating GATv2 model...
+Model parameters: 3,659,649
+
+======================================================================
+Training Model
+======================================================================
+Epoch 10/100 - Train Loss: 0.0668, Val Loss: 0.4373, Val AUC-ROC: 0.7720, Val F1: 0.0000
+Epoch 20/100 - Train Loss: 0.0501, Val Loss: 0.2786, Val AUC-ROC: 0.8865, Val F1: 0.2500
+Epoch 30/100 - Train Loss: 0.0455, Val Loss: 0.2363, Val AUC-ROC: 0.9362, Val F1: 0.4000
+Epoch 40/100 - Train Loss: 0.0395, Val Loss: 0.2589, Val AUC-ROC: 0.9250, Val F1: 0.3030
+Epoch 50/100 - Train Loss: 0.0372, Val Loss: 0.2397, Val AUC-ROC: 0.9412, Val F1: 0.4000
+Epoch 60/100 - Train Loss: 0.0327, Val Loss: 0.2202, Val AUC-ROC: 0.9422, Val F1: 0.4167
+Epoch 70/100 - Train Loss: 0.0306, Val Loss: 0.2130, Val AUC-ROC: 0.9210, Val F1: 0.4348
+Early stopping at epoch 76
+
+======================================================================
+Evaluating on Test Set
+======================================================================
+Test Metrics:
+  Loss: 0.2668
+  AUC-ROC: 0.8848
+  Accuracy: 0.8919
+  F1 Score: 0.3846
+  PR-AUC: 0.4664
+  Confusion Matrix:
+    TN=127, FP=11
+    FN=5, TP=5
+
+Model saved to: /Users/nguyennghia/PROJECT/Torch_molecule/models/gatv2_model/best_model.pt
+Metrics saved to: /Users/nguyennghia/PROJECT/Torch_molecule/models/gatv2_model/gatv2_model_metrics.txt
+Training curves saved to: /Users/nguyennghia/PROJECT/Torch_molecule/models/gatv2_model/training_curves.png
+
+======================================================================
+Training Complete!
+======================================================================
+

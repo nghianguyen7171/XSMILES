@@ -1,0 +1,10 @@
+Evaluation Metrics
+==================================================
+test_auc_roc: 0.8848
+test_accuracy: 0.8919
+test_f1: 0.3846
+test_pr_auc: 0.4664
+test_loss: 0.2668
+val_auc_roc: 0.9402
+val_f1: 0.6667
+val_pr_auc: 0.7309
