@@ -234,6 +234,7 @@ The paired visualization reveals several important insights:
 - **AUC-ROC**: 0.7167 (lowest)
 - **F1 Score**: 0.4706
 - **Analysis**: Fixed-length fingerprint vectors lose important structural information, limiting performance
+- **Reference**: Rogers, D., & Hahn, M. (2010). Extended-Connectivity Fingerprints. *Journal of Chemical Information and Modeling*, 50(5), 742-754.
 
 ### Graph-based Models (Single Modality)
 
@@ -241,26 +242,31 @@ The paired visualization reveals several important insights:
 - **AUC-ROC**: 0.9188 (good ranking)
 - **F1 Score**: 0.1818 (very low)
 - **Analysis**: High AUC-ROC but poor minority class prediction, likely due to imbalanced predictions
+- **Reference**: Based on Graph Convolutional Networks (Kipf & Welling, 2017) and Message Passing Neural Networks (Gilmer et al., 2017) adapted for molecular property prediction.
 
 **GRIN (torch-molecule):**
 - **AUC-ROC**: 0.8225
 - **F1 Score**: 0.4286
 - **Analysis**: Moderate performance, repetition-invariant property may not be crucial for this task
+- **Reference**: Repetition-Invariant Graph Neural Network architecture, part of the torch-molecule library for molecular AI applications.
 
 **GATv2 (PyTorch Geometric):**
 - **AUC-ROC**: 0.8848
 - **F1 Score**: 0.3846
 - **Analysis**: Attention mechanism helps but still limited by single-modality representation
+- **Reference**: Brody, S., Alon, U., & Yahav, E. (2022). How Attentive are Graph Attention Networks? *International Conference on Learning Representations (ICLR)*.
 
 **GIN (PyTorch Geometric):**
 - **AUC-ROC**: 0.8638
 - **F1 Score**: 0.5882 (best among graph-only models)
 - **Analysis**: Best F1 score among graph models, MLP-based message passing is effective
+- **Reference**: Xu, K., Hu, W., Leskovec, J., & Jegelka, S. (2019). How Powerful are Graph Neural Networks? *International Conference on Learning Representations (ICLR)*.
 
 **DMPNN (DeepChem):**
 - **AUC-ROC**: 0.8862
 - **F1 Score**: 0.3333
 - **Analysis**: Bond-centric message passing provides good ranking but struggles with minority class
+- **Reference**: Yang, K., et al. (2019). Analyzing Learned Molecular Representations for Property Prediction. *Journal of Chemical Information and Modeling*, 59(8), 3370-3388.
 
 ### Sequence-based Models
 
@@ -268,6 +274,9 @@ The paired visualization reveals several important insights:
 - **AUC-ROC**: 0.9804 (excellent)
 - **F1 Score**: 0.7826 (second-best)
 - **Analysis**: Transformer architecture effectively captures sequential patterns in SMILES, demonstrating the power of sequence models for molecular property prediction
+- **Reference**: 
+  - Vaswani, A., et al. (2017). Attention Is All You Need. *Advances in Neural Information Processing Systems (NeurIPS)*.
+  - Adapted for SMILES sequence processing via torch-molecule library.
 
 ### Multimodal Models
 
@@ -280,6 +289,10 @@ The paired visualization reveals several important insights:
   - Multimodal fusion significantly outperforms single-modality models
   - Attention-based fusion effectively combines sequence and graph information
   - Best performance across all metrics demonstrates the value of complementary representations
+- **Reference**: 
+  - Combines Transformer architecture (Vaswani et al., 2017) for sequence processing
+  - Graph Attention Network v2 (Brody et al., 2022) for graph processing
+  - Novel attention-based multimodal fusion architecture proposed in this work
 
 ## Class Imbalance Impact
 
@@ -330,4 +343,26 @@ Our comprehensive evaluation demonstrates:
 The SMILES-Graph visualization pairs provide interpretability, showing how SMILESGNN processes molecules through dual pathways and how multimodal fusion creates a more comprehensive understanding of molecular structure.
 
 These results validate the effectiveness of combining sequence and graph representations for molecular property prediction, with potential applications in drug discovery, toxicity screening, and molecular design.
+
+## References
+
+1. **Extended-Connectivity Fingerprints (ECFP)**: Rogers, D., & Hahn, M. (2010). Extended-Connectivity Fingerprints. *Journal of Chemical Information and Modeling*, 50(5), 742-754.
+
+2. **Graph Convolutional Networks**: Kipf, T. N., & Welling, M. (2017). Semi-Supervised Classification with Graph Convolutional Networks. *International Conference on Learning Representations (ICLR)*.
+
+3. **Message Passing Neural Networks**: Gilmer, J., Schoenholz, S. S., Riley, P. F., Vinyals, O., & Dahl, G. E. (2017). Neural Message Passing for Quantum Chemistry. *International Conference on Machine Learning (ICML)*.
+
+4. **Transformer Architecture**: Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., ... & Polosukhin, I. (2017). Attention Is All You Need. *Advances in Neural Information Processing Systems (NeurIPS)*.
+
+5. **Graph Attention Network v2 (GATv2)**: Brody, S., Alon, U., & Yahav, E. (2022). How Attentive are Graph Attention Networks? *International Conference on Learning Representations (ICLR)*.
+
+6. **Graph Isomorphism Network (GIN)**: Xu, K., Hu, W., Leskovec, J., & Jegelka, S. (2019). How Powerful are Graph Neural Networks? *International Conference on Learning Representations (ICLR)*.
+
+7. **Directed Message Passing Neural Network (DMPNN)**: Yang, K., Swanson, K., Jin, W., Coley, C., Eiden, P., Gao, H., ... & Coley, C. W. (2019). Analyzing Learned Molecular Representations for Property Prediction. *Journal of Chemical Information and Modeling*, 59(8), 3370-3388.
+
+8. **MoleculeNet Dataset**: Wu, Z., Ramsundar, B., Feinberg, E. N., Gomes, J., Geniesse, C., Pappu, A. S., ... & Pande, V. (2018). MoleculeNet: A Benchmark for Molecular Machine Learning. *Chemical Science*, 9(2), 513-530.
+
+9. **Focal Loss**: Lin, T. Y., Goyal, P., Girshick, R., He, K., & Dollár, P. (2017). Focal Loss for Dense Object Detection. *IEEE International Conference on Computer Vision (ICCV)*.
+
+10. **Jumping Knowledge Networks**: Xu, K., Li, C., Tian, Y., Sonobe, T., Kawarabayashi, K. I., & Jegelka, S. (2018). Representation Learning on Graphs with Jumping Knowledge Networks. *International Conference on Machine Learning (ICML)*.
 
