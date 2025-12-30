@@ -407,9 +407,21 @@ Confusion matrices and error overlap analysis:
 
 ### Prediction Samples
 
-Examples of correct and incorrect predictions:
+Examples of correct and incorrect predictions from representative models:
 
-![Sample Predictions](output/figures/05_samples_both_correct_nontoxic.png)
+![Correct Toxic Predictions](results/sample_representative_models_correct_toxic.png)
+
+![Correct Non-toxic Predictions](results/sample_representative_models_correct_nontoxic.png)
+
+![Model Disagreements](results/sample_representative_models_disagreement.png)
+
+![Diverse Molecular Structures](results/sample_representative_models_diverse.png)
+
+### SMILESGNN Molecular Graph Visualization
+
+The SMILESGNN model processes molecules as graphs where atoms are nodes and bonds are edges:
+
+![SMILESGNN Molecular Graphs](results/smilesgnn_molecular_graphs.png)
 
 ## Key Features
 
