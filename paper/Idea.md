@@ -78,25 +78,59 @@ Scaffold-Based Splitting
 
 ### Dataset Examples
 
-#### Example 1: Non-toxic Molecule (Label = 0)
-```
-SMILES: CCO
-Name: Ethanol
-Structure:
-    H   H
-    |   |
-  H-C-C-O-H
-    |   |
-    H   H
-  
-Label: 0 (Non-toxic)
-```
+To illustrate the dataset, we present real examples from the ClinTox training set:
 
-#### Example 2: Toxic Molecule (Label = 1)
-```
-SMILES: [Complex molecular structure]
-Label: 1 (Toxic - failed clinical trials)
-```
+#### Example 1: Non-toxic Molecules (Label = 0)
+
+**Sample 1:**
+- **SMILES**: `C(CO)N(c1c(c(c(c(c1I)C(=O)NCC(CO)O)I)C(=O)NCC(CO)O)I)C(=O)CO`
+- **Chemical Formula**: C₁₈H₂₄I₃N₃O₉
+- **Molecular Weight**: 806.86 Da
+- **Structure**: Complex iodinated aromatic compound with multiple amide and ether groups
+- **Label**: 0 (Non-toxic - FDA approved)
+
+![Non-toxic Example 1](figures/non_toxic_example_1.png)
+
+**Sample 2:**
+- **SMILES**: `c1c(c(cc(c1Cl)Cl)Cl)OCC#CI`
+- **Chemical Formula**: C₉H₄Cl₃IO
+- **Molecular Weight**: 359.84 Da
+- **Structure**: Trichlorinated aromatic compound with iodo-alkyne substitution
+- **Label**: 0 (Non-toxic)
+
+![Non-toxic Example 2](figures/non_toxic_example_2.png)
+
+#### Example 2: Toxic Molecules (Label = 1)
+
+**Sample 1:**
+- **SMILES**: `B([C@H](CC(C)C)NC(=O)CNC(=O)C1=C(C=CC(=C1)Cl)Cl)(O)O`
+- **Chemical Formula**: C₁₄H₁₉BCl₂N₂O₄
+- **Molecular Weight**: 360.08 Da
+- **Structure**: Boronic acid derivative with chiral center and dichlorinated aromatic ring
+- **Label**: 1 (Toxic - failed clinical trials due to toxicity)
+
+![Toxic Example 1](figures/toxic_example_0.png)
+
+**Sample 2:**
+- **SMILES**: `C1=CC=C(C=C1)NC(=O)CCCCCCC(=O)NO`
+- **Chemical Formula**: C₁₄H₂₀N₂O₃
+- **Molecular Weight**: 264.15 Da
+- **Structure**: Aromatic amine with long aliphatic chain and nitroso group
+- **Label**: 1 (Toxic - failed clinical trials due to toxicity)
+
+![Toxic Example 2](figures/toxic_example_32.png)
+
+#### Visual Comparison
+
+The figure below shows side-by-side comparison of non-toxic and toxic molecules from the dataset:
+
+![Molecular Examples Comparison](figures/molecular_examples_comparison.png)
+
+**Observations:**
+- Both non-toxic and toxic molecules can have similar structural features (e.g., aromatic rings, functional groups)
+- Toxicity is not easily determined by visual inspection alone
+- Subtle structural differences may lead to significant differences in biological activity
+- Machine learning models can learn complex patterns that are not immediately apparent to human experts
 
 ### Molecular Properties Distribution
 
