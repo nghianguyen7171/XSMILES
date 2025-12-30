@@ -166,9 +166,8 @@ Input: Node Features (num_nodes, 25)
 │    Mean-Max Pooling (concatenated)          │
 │    [mean(h), max(h)]                        │
 │    → (batch, 288 * 2 = 576)                │
-│                                             │
-│    Note: Actually uses hidden_dim=96,       │
-│    so output is (batch, 192) with JK        │
+│    With JK (cat): hidden_dim * layers * 2  │
+│    96 * 3 * 2 = 576                        │
 └─────────────────────────────────────────────┘
 ```
 
@@ -181,7 +180,7 @@ Input: Node Features (num_nodes, 25)
 - Residual connections: Enabled
 - Jumping Knowledge: Enabled (concatenation mode)
 - Graph pooling: Mean-Max pooling (concatenated)
-- Output dimension: 192 (with JK cat, hidden_dim=96 → 96*3*2/3 = 192)
+- Output dimension: 576 (hidden_dim * num_layers * 2 = 96 * 3 * 2)
 
 **Note:** The actual implementation uses `hidden_dim=96` and `num_graph_layers=3`. With JK concatenation and meanmax pooling, the graph representation dimension is `96 * 3 * 2 = 576`, but it gets projected in the fusion module.
 
@@ -191,11 +190,11 @@ The fusion module combines SMILES and graph representations using attention mech
 
 ```
 Input: SMILES Repr (batch, 96)
-       Graph Repr (batch, 192)  [with JK and meanmax]
+       Graph Repr (batch, 576)  [with JK and meanmax]
        
 ┌─────────────────────────────────────────────┐
 │ 1. Project Graph Repr                       │
-│    Linear(192 → 96)                         │
+│    Linear(576 → 96)                         │
 │    → (batch, 96)                            │
 └─────────────────┬───────────────────────────┘
                   │
@@ -280,14 +279,14 @@ forward(data, smiles_token_ids, smiles_attention_mask):
     
     1. Encode Graph:
        graph_repr = encode_graph(data)
-       → (batch, 192)
+       → (batch, 576)
     
     2. Encode SMILES:
        smiles_repr = smiles_encoder(smiles_token_ids, smiles_attention_mask)
        → (batch, 96)
     
     3. Fusion (Attention-based):
-       graph_repr_proj = Linear(graph_repr)  # (batch, 96)
+       graph_repr_proj = Linear(576 → 96)(graph_repr)  # (batch, 96)
        attended_graph = MultiHeadAttention(
            query=smiles_repr,  # (batch, 1, 96)
            key=graph_repr_proj,  # (batch, 1, 96)
@@ -342,8 +341,8 @@ Based on the configuration file (`config/smilesgnn_config.yaml`):
 | Node Embedding | (num_nodes, 25) | (num_nodes, 96) | 25 × 96 |
 | Edge Embedding | (num_edges, 17) | (num_edges, 96) | 17 × 96 |
 | GNN Layers (×3) | (num_nodes, 96) | (num_nodes, 96) | ~150K |
-| Graph Pooling | (num_nodes, 288) | (batch, 192) | - |
-| Graph Projection | (batch, 192) | (batch, 96) | 192 × 96 |
+| Graph Pooling | (num_nodes, 288) | (batch, 576) | - |
+| Graph Projection | (batch, 576) | (batch, 96) | 576 × 96 |
 | Fusion (Attention) | (batch, 96), (batch, 96) | (batch, 192) | ~37K |
 | Predictor | (batch, 192) | (batch, 1) | ~50K |
 
