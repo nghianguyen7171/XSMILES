@@ -1,0 +1,9 @@
+name,smiles,label
+Aspirin,CC(=O)Oc1ccccc1C(=O)O,0
+Caffeine,Cn1cnc2c1c(=O)n(C)c(=O)n2C,0
+Acetaminophen,CC(=O)Nc1ccc(O)cc1,0
+TOX-ref-004,C1=CC=C2C(=C1)C(=NN=C2NC3=CC=C(C=C3)Cl)CC4=CC=NC=C4,1
+Cisplatin-Pt,[NH3][Pt](Cl)(Cl)[NH3],1
+Carboplatin-Pt,C1CC(C1)(C(=O)O)C(=O)O.N.N.[Pt],1
+Bi-subgallate,c1ccc2c(c1)C(=O)O[Bi](O2)O,0
+Thalidomide,O=C1CCC(=O)N1c1ccc2c(c1)C(=O)N(C2=O),1

@@ -1,0 +1,35 @@
+name: drug-tox-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - rdkit
+  - numpy<2.0
+  - pandas
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - umap-learn
+  - jupyter
+  - ipykernel
+  - pip
+  - pip:
+    # PyTorch with CUDA 12.1 (change cu121 -> cpu for CPU-only)
+    - --index-url https://download.pytorch.org/whl/cu121
+    - torch==2.4.0
+    # PyG wheels (must match torch version exactly)
+    - --find-links https://data.pyg.org/whl/torch-2.4.0+cu121.html
+    - torch-scatter
+    - torch-geometric
+    # Remaining dependencies
+    - transformers>=4.20.0
+    - networkx
+    - matplotlib-venn
+    - pillow
+    - scipy>=1.14.1
+    - huggingface_hub>=0.22.2
+    - optuna>=4.0.0
+    - deepchem
+    - pytdc
+    - torch-molecule

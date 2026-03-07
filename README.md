@@ -1,631 +1,375 @@
-# Clinical Drug Toxicity Prediction with torch-molecule
+# SMILESGNN: Clinical Toxicity Prediction via Multimodal Molecular Fusion
 
-A complete research prototype for predicting clinical drug toxicity from molecular structures (SMILES strings) using deep learning, with visual explanations highlighting important molecular substructures.
+Implementation of **SMILESGNN**, a multimodal deep learning architecture for clinical drug toxicity prediction, combining SMILES sequence encoding (Transformer) with molecular graph encoding (GATv2) through an attention-based fusion mechanism.
 
-![Project Overview](output/figures/05_model_performance_comparison.png)
+> Nguyen et al., *"Advancing Clinical Toxicity Prediction Through Multimodal Fusion of SMILES Sequences and Molecular Graph Representation"*, CITA 2026.
 
-## Overview
+---
 
-This project implements multiple deep learning approaches for clinical drug toxicity prediction:
+## Results
 
-- **Baseline MLP Model** - Multi-layer perceptron on Morgan fingerprints
-- **BFGNN (torch-molecule)** - Graph Neural Network for molecular property prediction
-- **GRIN (torch-molecule)** - Repetition-Invariant Graph Neural Network
-- **SMILESTransformer (torch-molecule)** - Transformer-based model on SMILES sequences
-- **DMPNN (DeepChem)** - Directed Message Passing Neural Network
-- **GATv2 (PyTorch Geometric)** - Graph Attention Network v2
-- **GIN (PyTorch Geometric)** - Graph Isomorphism Network
-- **SMILESGNN (PyTorch Geometric)** ⭐ - Multimodal model combining SMILES and graph representations
+Evaluated on the [ClinTox](https://moleculenet.org/datasets-1) dataset (1,480 molecules, scaffold-based split, 11.5:1 class imbalance).
 
-The project includes comprehensive explainability methods, error analysis, embedding visualizations, and consolidated results.
+| Model | AUC-ROC | Accuracy | F1 | AUPRC |
+|---|---|---|---|---|
+| Baseline MLP (Morgan FP) | 0.717 | 0.939 | 0.471 | 0.450 |
+| GRIN | 0.823 | 0.946 | 0.429 | 0.379 |
+| GIN | 0.864 | 0.953 | 0.588 | 0.503 |
+| GATv2 | 0.885 | 0.892 | 0.385 | 0.466 |
+| DMPNN | 0.886 | 0.867 | 0.333 | 0.596 |
+| BFGNN | 0.919 | 0.939 | 0.182 | 0.616 |
+| SMILESTransformer | 0.980 | 0.966 | 0.783 | 0.665 |
+| **SMILESGNN** | **0.997** | **0.980** | **0.870** | **0.967** |
 
-**Main Library:** [torch-molecule](https://github.com/liugangcode/torch-molecule) - A molecular AI library with sklearn-style interface
+![ROC Curves](assets/roc_curves.png)
+![PR Curves](assets/pr_curves.png)
 
-**Primary Dataset:** ClinTox (clinical toxicity dataset) - Comparing FDA-approved drugs vs. drugs that failed clinical trials due to toxicity
+---
+
+## Architecture
+
+SMILESGNN processes each molecule through two parallel encoders whose outputs are fused via cross-attention:
+
+```
+SMILES string ──► Transformer Encoder (2 layers, d=96, 4 heads) ──► h_SMILES ∈ ℝ⁹⁶
+                                                                           │
+                                                                    Cross-Attention
+                                                                    (SMILES=query,
+Molecular graph ──► GATv2 Encoder (3 layers, 4 heads, JK) ──────►  graph=key/value) ──► h_fused ∈ ℝ¹⁹² ──► MLP ──► P(toxic)
+                    Mean-Max pool → h_graph ∈ ℝ⁵⁷⁶
+```
+
+**Key hyperparameters** (see `config/smilesgnn_config.yaml`):
+
+| Component | Setting |
+|---|---|
+| SMILES vocab / max length | 100 / 128 tokens |
+| Transformer layers / heads / d_ff | 2 / 4 / 192 |
+| GATv2 layers / heads / hidden | 3 / 4 / 96 |
+| Node features / Edge features | 25 / 17 |
+| Jumping Knowledge mode | concatenation |
+| Graph pooling | mean + max |
+| Fusion | cross-attention (4 heads) |
+| Loss | Focal Loss (α=0.25, γ=2.0) |
+| Optimizer | AdamW (lr=5e-4, wd=1e-4) |
+| Regularization | Dropout=0.4, BatchNorm, weighted sampler |
+| Early stopping | patience=15, monitor=val-F1 |
+
+![SMILES-Graph Pairs](assets/smiles_graph_pairs.png)
+
+---
 
 ## Project Structure
 
 ```
-Torch_molecule/
-├── env/
-│   ├── environment.yml          # Conda environment specification
-│   ├── requirements.txt         # Pip requirements (reference)
-│   └── install-pip3.sh         # Automated installation script
-├── notebooks/
-│   ├── 00_setup_and_structure.ipynb        # Project setup
-│   ├── 01_data_exploration.ipynb           # Dataset exploration & visualization
-│   ├── 02_training_baseline.ipynb          # Train baseline MLP model
-│   ├── 03_training_gnn.ipynb               # Train BFGNN model
-│   ├── 03_training_grin.ipynb              # Train GRIN model
-│   ├── 03_training_smilestransformer.ipynb # Train SMILESTransformer model
-│   ├── 03_training_deepchem_gcn.ipynb      # Train DMPNN model
-│   ├── 04_explainability_and_visualization.ipynb  # Model explanations
-│   ├── 05_results_and_error_analysis.ipynb        # Comprehensive analysis
-│   └── 06_representation.ipynb                     # Feature representation visualization
-├── src/
-│   ├── __init__.py
-│   ├── data.py                  # Dataset loading (ClinTox, Tox21)
-│   ├── featurization.py         # SMILES → fingerprints/graphs
-│   ├── models.py                # Baseline MLP + torch-molecule models
-│   ├── train.py                 # Training loops
-│   ├── explain.py               # Attribution methods
-│   ├── viz.py                   # RDKit visualization
-│   ├── utils.py                 # Utilities (seed, config, metrics)
-│   ├── pipelines.py             # High-level training/evaluation pipelines
-│   ├── graph_data.py            # PyTorch Geometric data conversion
-│   ├── graph_models.py          # GATv2 model architecture
-│   ├── graph_models_gin.py      # GIN model architecture
-│   ├── graph_models_hybrid.py   # SMILESGNN multimodal model
-│   ├── graph_train.py           # Training infrastructure for PyG models
-│   └── smiles_tokenizer.py      # SMILES tokenization for sequence models
-├── scripts/
-│   ├── train_gatv2.py           # GATv2 model training script
-│   ├── train_gin.py             # GIN model training script
-│   ├── train_hybrid.py          # SMILESGNN model training script
-│   ├── consolidate_results.py   # Consolidate metrics from all models
-│   ├── generate_curves.py       # Generate ROC and PR curves
-│   ├── generate_sample_visualizations.py  # Sample prediction visualizations
-│   └── generate_smilesgnn_graph_visualization.py  # Molecular graph visualization
-├── config/
-│   ├── gatv2_config.yaml        # GATv2 model configuration
-│   ├── gin_config.yaml          # GIN model configuration
-│   └── smilesgnn_config.yaml    # SMILESGNN model configuration
-├── results/                     # Consolidated results directory
-│   ├── overall_results.csv      # All models performance comparison
-│   ├── overall_results.md       # Markdown table of results
-│   ├── roc_curves_all_models.png
-│   ├── pr_curves_all_models.png
-│   └── sample_representative_models_*.png
-├── data/                        # Dataset cache (created at runtime)
-├── models/                      # Saved models (created at runtime)
-└── output/
-    └── figures/                 # Generated visualizations
+molecule/
+├── src/                          # Core library
+│   ├── data.py                   # ClinTox loading with scaffold split
+│   ├── featurization.py          # Morgan fingerprints & graph features
+│   ├── smiles_tokenizer.py       # Custom SMILES tokenizer
+│   ├── graph_data.py             # RDKit → PyG Data (25 node, 17 edge features)
+│   ├── graph_models_hybrid.py    # SMILESGNN architecture ⭐
+│   ├── graph_models.py           # GATv2 standalone
+│   ├── graph_models_gin.py       # GIN standalone
+│   ├── graph_train.py            # Training loop (Focal Loss, early stopping)
+│   ├── models.py                 # Baseline MLP + torch-molecule wrappers
+│   ├── train.py                  # Training for baseline models
+│   ├── pipelines.py              # High-level training pipelines
+│   ├── explain.py                # Gradient & perturbation attribution
+│   ├── gnn_explainer.py          # GNNExplainer integration ⭐
+│   ├── inference.py              # Batch inference engine (used by app.py)
+│   ├── viz.py                    # RDKit molecular visualization
+│   ├── analysis.py               # Metrics and error analysis
+│   └── utils.py                  # Seeds, config, metrics
+│
+├── scripts/                      # Training & evaluation scripts
+│   ├── train_hybrid.py           # Train SMILESGNN ⭐
+│   ├── explain_smilesgnn.py      # GNNExplainer CLI ⭐
+│   ├── train_gatv2.py            # Train GATv2 baseline
+│   ├── train_gin.py              # Train GIN baseline
+│   ├── consolidate_results.py    # Merge metrics from all models
+│   └── generate_curves.py        # Reproduce ROC/PR curve figures
+│
+├── notebooks/                    # Interactive workflows
+│   ├── 01_data_exploration.ipynb           # Dataset overview & scaffold split
+│   ├── 02_training_baseline.ipynb          # Baseline MLP (Morgan FP)
+│   ├── 03_training_gnn.ipynb               # BFGNN (torch-molecule + Optuna)
+│   ├── 03_training_grin.ipynb              # GRIN (torch-molecule + Optuna)
+│   ├── 03_training_smilestransformer.ipynb # SMILESTransformer (torch-molecule + Optuna)
+│   ├── 07_gnnexplainer.ipynb               # GNNExplainer attribution ⭐
+│   └── 08_inference.ipynb                  # Programmatic inference walkthrough ⭐
+│
+├── config/                       # Model hyperparameter configs (YAML)
+│   ├── smilesgnn_config.yaml     # SMILESGNN ⭐
+│   ├── gatv2_config.yaml
+│   └── gin_config.yaml
+│
+├── test_data/                    # Demo files for the Streamlit app
+│   ├── screening_library.csv     # 30 compounds (balanced) — main demo ⭐
+│   ├── toxic_compounds.csv       # All 10 confirmed-toxic molecules
+│   ├── reference_panel.csv       # Famous drugs (Thalidomide, Aspirin …)
+│   ├── with_parse_errors.csv     # Edge-case chemistry (organometallics)
+│   ├── smiles_only.csv           # Minimal CSV — SMILES column only
+│   ├── named_compounds.txt       # SMILES<TAB>name format
+│   └── README.md                 # File descriptions & suggested test order
+│
+├── results/
+│   └── overall_results.csv       # Full benchmark table
+│
+├── assets/                       # Figures for this README
+│   ├── roc_curves.png
+│   ├── pr_curves.png
+│   ├── smiles_graph_pairs.png
+│   ├── molecular_graphs.png
+│   ├── model_performance.png
+│   └── confusion_matrices.png
+│
+├── app.py                        # Streamlit inference app ⭐
+├── environment.yml               # Conda environment (recommended)
+├── requirements.txt              # Pip requirements
+└── .gitignore
 ```
 
-## Models and Results
-
-### Performance Summary
-
-**SMILESGNN** achieves the best overall performance (AUC-ROC: 0.9971, F1: 0.8696) by combining sequence and graph representations through multimodal fusion. **SMILESTransformer** follows closely as the best single-modality model (AUC-ROC: 0.9804, F1: 0.7826), demonstrating the power of transformer architectures on SMILES sequences.
-
-### Model Performance Comparison
-
-Models sorted by AUC-ROC (lowest to highest):
-
-| Model | AUC-ROC | Accuracy | F1 Score | AUPRC |
-|-------|---------|----------|----------|-------|
-| Baseline MLP | 0.7167 | 0.9392 | 0.4706 | 0.4497 |
-| GRIN (torch-molecule) | 0.8225 | 0.9459 | 0.4286 | 0.3794 |
-| GIN (PyTorch Geometric) | 0.8638 | **0.9527** | **0.5882** | 0.5034 |
-| GATv2 (PyTorch Geometric) | 0.8848 | 0.8919 | 0.3846 | 0.4664 |
-| DMPNN (DeepChem) | 0.8862 | 0.8667 | 0.3333 | 0.5962 |
-| BFGNN (torch-molecule) | 0.9188 | 0.9392 | 0.1818 | 0.6164 |
-| SMILESTransformer (torch-molecule) | 0.9804 | 0.9662 | 0.7826 | 0.6651 |
-| **SMILESGNN** (PyTorch Geometric) ⭐ | **0.9971** | **0.9797** | **0.8696** | **0.9669** |
-
-*Best values in bold. Results are on the ClinTox test set. SMILESGNN achieves the best overall performance by combining sequence and graph representations.*
-
-![Model Performance Comparison](output/figures/05_model_performance_comparison.png)
-
-### Model Architectures
-
-#### 1. Baseline MLP (FingerprintMLP)
-- **Input:** Morgan fingerprints (2048-bit ECFP-like) [[1]](#references)
-- **Architecture:** 
-  - Input Layer: 2048 → 512
-  - Hidden Layer 1: 512 → 256
-  - Hidden Layer 2: 256 → 128
-  - Output Layer: 128 → 1
-- **Framework:** Pure PyTorch
-- **Training:** Custom training loop with early stopping
-- **Reference:** Extended-Connectivity Fingerprints (ECFP) as introduced by Rogers & Hahn (2010)
-
-#### 2. BFGNN (torch-molecule)
-- **Input:** SMILES strings (automatically converted to graphs)
-- **Architecture:** Graph Neural Network with message passing [[2, 3]](#references)
-- **Framework:** torch-molecule (sklearn-style API)
-- **Training:** Automated hyperparameter optimization via `autofit()`
-- **Reference:** Based on Graph Convolutional Networks and Message Passing Neural Networks for molecular property prediction
-
-#### 3. GRIN (torch-molecule)
-- **Input:** SMILES strings (graph representation)
-- **Architecture:** Repetition-Invariant Graph Neural Network [[2, 3]](#references)
-- **Framework:** torch-molecule
-- **Training:** Automated hyperparameter optimization
-- **Reference:** Graph Neural Network architecture with repetition-invariant properties for molecular representation
-
-#### 4. SMILESTransformer (torch-molecule)
-- **Input:** SMILES strings (sequence representation)
-- **Architecture:** Transformer-based encoder-decoder [[4]](#references)
-- **Framework:** torch-molecule
-- **Training:** Automated hyperparameter optimization
-- **Reference:** Transformer architecture (Vaswani et al., 2017) adapted for SMILES sequence processing
-
-#### 5. DMPNN (DeepChem)
-- **Input:** GraphData objects (DMPNN featurization with bond features)
-- **Architecture:** Directed Message Passing Neural Network
-- **Framework:** DeepChem
-- **Training:** Custom training loop with DeepChem Dataset
-- **Reference:** Directed Message Passing Neural Network for molecular property prediction
-
-#### 6. GATv2 (PyTorch Geometric)
-- **Input:** PyTorch Geometric Data objects (25 node features, 17 edge features)
-- **Architecture:** 
-  - GATv2 layers (4 layers, 4 heads, 128 hidden dim)
-  - Jumping Knowledge connections
-  - Set2Set pooling
-  - MLP predictor head
-- **Framework:** PyTorch Geometric
-- **Training:** Focal loss with weighted sampling
-- **Reference:** Graph Attention Network v2 with dynamic attention mechanism
-
-#### 7. GIN (PyTorch Geometric)
-- **Input:** PyTorch Geometric Data objects (25 node features, 17 edge features)
-- **Architecture:** 
-  - GIN layers (4 layers, MLP-based message passing, 128 hidden dim)
-  - Learnable epsilon parameter
-  - Jumping Knowledge connections
-  - Mean-Max pooling
-  - MLP predictor head
-- **Framework:** PyTorch Geometric
-- **Training:** Focal loss with weighted sampling
-- **Reference:** Graph Isomorphism Network (provably as powerful as Weisfeiler-Lehman test)
-
-#### 8. SMILESGNN (PyTorch Geometric) ⭐
-- **Input:** 
-  - Graph: PyTorch Geometric Data objects with rich node/edge features
-  - SMILES: Tokenized SMILES sequences
-- **Architecture:** 
-  - **Graph Encoder:** GATv2 layers with Jumping Knowledge and Mean-Max pooling
-  - **SMILES Encoder:** Transformer encoder with positional encoding
-  - **Fusion Module:** Attention-based fusion combining sequence and graph representations
-  - **Predictor:** MLP head with batch norm and dropout
-- **Framework:** PyTorch Geometric + PyTorch Transformer
-- **Training:** Focal loss with weighted sampling, enhanced regularization
-- **Best Performing Model** ✨
-- **Reference:** Multimodal fusion architecture combining sequence (SMILES Transformer) and graph (GATv2/GIN) representations via attention mechanism
-
-### ROC and Precision-Recall Curves
-
-![ROC Curves](results/roc_curves_all_models.png)
-
-![PR Curves](results/pr_curves_all_models.png)
-
-### Model References
-
-Each model used in this project is based on established research in molecular property prediction:
-
-1. **Morgan Fingerprints (ECFP)**: Extended-Connectivity Fingerprints (ECFP) are circular topological fingerprints that capture local molecular substructures. Used in the Baseline MLP model.
-
-2. **Graph Neural Networks**: Graph-based models (BFGNN, GRIN) process molecules as graphs, using message passing to aggregate information from neighboring atoms.
-
-3. **Transformer Architecture**: The SMILESTransformer model leverages the Transformer architecture originally designed for sequence-to-sequence tasks, adapted for molecular SMILES sequences.
-
-4. **ClinTox Dataset**: Part of the MoleculeNet benchmark [[5]](#references) for molecular machine learning.
-
-### Additional References
-
-- **torch-molecule Library**: Available at [https://github.com/liugangcode/torch-molecule](https://github.com/liugangcode/torch-molecule). Provides sklearn-style interfaces for various molecular AI models including BFGNN, GRIN, and SMILESTransformer.
-
-- **Graph Neural Networks for Molecules**: The graph-based models (BFGNN, GRIN) draw inspiration from various GNN architectures designed for molecular property prediction, including Graph Convolutional Networks [[2]](#references) and Message Passing Neural Networks [[3]](#references).
-
-## Dataset
-
-### ClinTox Dataset
-
-The ClinTox dataset compares drugs approved by the FDA and drugs that have failed clinical trials for toxicity reasons. This is a binary classification task.
-
-- **Total Size:** 1,480 compounds
-- **Train Set:** 1,184 compounds
-- **Validation Set:** 148 compounds
-- **Test Set:** 148 compounds
-- **Split Method:** Scaffold-based splitting (ensures molecular scaffolds don't overlap between splits)
-- **Class Distribution:** Imbalanced dataset (majority class: non-toxic)
-
-![Class Distribution](output/figures/01_class_distribution.png)
-
-![Molecular Property Distributions](output/figures/01_molecular_property_distributions.png)
-
-![Atom and Bond Distribution](output/figures/01_atom_bond_distribution.png)
-
-## Setup
-
-### Prerequisites
-
-- Python 3.10+
-- Conda or pip3 (macOS)
-- Jupyter Notebook
-
-### Local Setup (macOS)
-
-#### Option 1: Using Conda (Recommended)
-
-1. **Create the environment:**
-   ```bash
-   conda env create -f env/environment.yml
-   ```
-
-2. **Activate the environment:**
-   ```bash
-   conda activate drug-tox-env
-   ```
-
-3. **Install Jupyter kernel:**
-   ```bash
-   python -m ipykernel install --user --name drug-tox-env --display-name "Python (drug-tox-env)"
-   ```
-
-#### Option 2: Using pip3 (macOS)
-
-**IMPORTANT:** `torch-scatter` requires `torch` to be installed first!
-
-1. **Use the automated installation script (recommended):**
-   ```bash
-   ./env/install-pip3.sh
-   ```
-
-2. **Or install manually in steps:**
-   ```bash
-   pip3 install -r env/requirements-base.txt
-   pip3 install -r env/requirements-torch-extensions.txt
-   pip3 install -r env/requirements-optional.txt
-   ```
-
-3. **Install Jupyter:**
-   ```bash
-   pip3 install jupyter ipykernel
-   python3 -m ipykernel install --user --name drug-tox-env --display-name "Python (drug-tox-env)"
-   ```
-
-**Note:** On macOS, always use `pip3` instead of `pip` for Python 3 packages.
-
-### Google Colab Setup
-
-In Colab, install dependencies directly:
-```python
-!pip install torch-molecule torch-geometric torch-scatter deepchem transformers rdkit-pypi networkx
-```
-
-## Usage
-
-### Running the Experiment
-
-Execute notebooks in the following sequence:
-
-1. **00_setup_and_structure.ipynb**
-   - Verify project structure
-   - Test imports and dependencies
-   - Create necessary directories
-
-2. **01_data_exploration.ipynb**
-   - Load ClinTox dataset
-   - Analyze dataset statistics
-   - Visualize molecular structures
-   - Generate data exploration figures
-
-3. **02_training_baseline.ipynb**
-   - Train baseline MLP model
-   - Evaluate on validation and test sets
-   - Save model and metrics
-
-4. **03_training_gnn.ipynb** / **03_training_grin.ipynb** / **03_training_smilestransformer.ipynb** / **03_training_deepchem_gcn.ipynb**
-   - Train torch-molecule models (BFGNN, GRIN, SMILESTransformer)
-   - Train DeepChem DMPNN model
-   - Automated hyperparameter optimization
-   - Model comparison and evaluation
-   - Save trained models
-
-**Alternatively, use training scripts for PyTorch Geometric models:**
-- `scripts/train_gatv2.py` - Train GATv2 model
-- `scripts/train_gin.py` - Train GIN model  
-- `scripts/train_hybrid.py` - Train SMILESGNN multimodal model
-- `scripts/consolidate_results.py` - Consolidate metrics from all models
-- `scripts/generate_curves.py` - Generate ROC and PR curves
-- `scripts/generate_sample_visualizations.py` - Generate sample prediction visualizations
-
-5. **04_explainability_and_visualization.ipynb**
-   - Generate model explanations for all models
-   - Visualize atom-level importance
-   - Compare explanations across models
-   - Analyze correct and incorrect predictions
-
-6. **05_results_and_error_analysis.ipynb**
-   - Comprehensive performance comparison
-   - Confusion matrices for all models
-   - Error overlap analysis
-   - ROC and PR curves
-   - Prediction probability distributions
-
-7. **06_representation.ipynb**
-   - Extract and visualize feature representations
-   - t-SNE and UMAP embeddings for all models
-   - Graph structure visualizations
-   - Compare representations across model types
-
-### Quick Start Example
-
-```python
-from src.data import load_clintox
-from src.featurization import featurize_batch
-from src.models import create_baseline_model
-from src.train import train_baseline_model, evaluate_model
-from src.explain import compute_gradient_attribution
-from src.viz import plot_explained_molecule
-
-# Load data
-train_df, val_df, test_df = load_clintox()
-
-# Featurize (for baseline model)
-train_fps = featurize_batch(train_df['smiles'].tolist(), mode="fingerprint")
-
-# Create and train model
-model = create_baseline_model()
-# ... training code ...
-
-# Generate explanations
-attributions = compute_gradient_attribution(model, smiles, input_tensor)
-plot_explained_molecule(smiles, attributions)
-```
-
-## Visualizations
-
-### Data Exploration
-
-The project includes comprehensive visualizations of the dataset:
-
-- **Class Distribution:** Shows the imbalance in toxic vs. non-toxic compounds
-- **Molecular Properties:** Distributions of molecular weights, logP, etc.
-- **Atom/Bond Statistics:** Analysis of molecular complexity
-
-### Model Explanations
-
-Atom-level importance visualizations for all models:
-
-![MLP Explanations](output/figures/05_samples_mlp_correct_grin_wrong.png)
-
-### Graph Structure Visualization
-
-Graph-based models (BFGNN, GRIN) process molecules as graphs where atoms are nodes and bonds are edges:
-
-![GRIN Graph Structures](output/figures/06_grin_graph_structures.png)
-
-![BFGNN Graph Structures](output/figures/06_bfgnn_graph_structures.png)
-
-### Feature Representations
-
-t-SNE and UMAP visualizations of model embeddings:
-
-![Model Representations Comparison](output/figures/06_all_models_representation_comparison.png)
-
-![MLP Embeddings](output/figures/06_mlp_embeddings_umap.png)
-
-![SMILESTransformer Embeddings](output/figures/06_smilestransformer_embeddings_umap.png)
-
-### Error Analysis
-
-Confusion matrices and error overlap analysis:
-
-![Confusion Matrices](output/figures/05_confusion_matrices.png)
-
-![Error Overlap](output/figures/05_error_overlap_venn.png)
-
-### Top 2 Models Comparison: SMILESTransformer vs SMILESGNN
-
-Direct comparison of the two best-performing models on the same molecules:
-
-#### Both Models Correct
-
-Both SMILESTransformer and SMILESGNN correctly predict toxic compounds:
-
-![Both Correct - Toxic](results/top2_comparison_both_correct_toxic.png)
-
-Both models correctly predict non-toxic compounds:
-
-![Both Correct - Non-toxic](results/top2_comparison_both_correct_nontoxic.png)
-
-#### SMILESGNN Advantages
-
-Cases where SMILESGNN is correct but SMILESTransformer is wrong - demonstrating the multimodal fusion advantage:
-
-![SMILESGNN Wins](results/top2_comparison_smilesgnn_wins.png)
-
-#### SMILESTransformer Advantages  
-
-Cases where SMILESTransformer is correct but SMILESGNN is wrong:
-
-![SMILESTransformer Wins](results/top2_comparison_smilestransformer_wins.png)
-
-#### Diverse Molecular Structures
-
-Comparison across diverse molecular structures showing prediction differences:
-
-![Diverse Comparison](results/top2_comparison_diverse.png)
-
-### SMILESGNN Molecular Graph Visualization
-
-The SMILESGNN model combines two complementary representations of molecules:
-- **SMILES Sequence** (left): Processed by the Transformer encoder to capture sequential patterns
-- **Graph Structure** (right): Processed by the GNN encoder where atoms are nodes and bonds are edges
-
-The following visualizations demonstrate how SMILESGNN understands and learns the characteristic structure of molecules through both representations. Four diverse samples show the correspondence between SMILES sequences and their graph structures:
-
-![SMILESGNN SMILES-Graph Pairs](results/smilesgnn_smiles_graph_pairs.png)
-
-Each row shows one molecule in both representations, demonstrating how SMILESGNN leverages both the sequential patterns in SMILES strings and the explicit structural connectivity in graph representations for superior molecular understanding.
-
-## Key Features
-
-### Data Loading
-- ClinTox dataset with scaffold-based train/val/test splits
-- Automatic handling of missing values
-- DeepChem and PyTDC fallback support
-- Dataset caching for faster subsequent loads
-
-### Featurization
-- **Fingerprint mode:** Morgan fingerprints (ECFP-like, 2048 bits) for baseline models
-- **Graph mode:** SMILES strings automatically converted to graph representations
-- **Sequence mode:** SMILES strings as token sequences for transformer models
-
-### Models
-- **Baseline:** Custom PyTorch MLP on fingerprint features
-- **torch-molecule:** BFGNN, GRIN, SMILESTransformer with sklearn-style API
-- **DeepChem:** DMPNN model with GraphData featurization
-- **PyTorch Geometric:** GATv2, GIN, SMILESGNN with custom architectures
-- Automated hyperparameter optimization via Optuna (for torch-molecule models)
-- Custom training loops with Focal Loss and weighted sampling (for PyG models)
-
-### Explainability
-- **Gradient-based attribution:** For fingerprint-based models (MLP)
-- **Perturbation-based attribution:** For graph/sequence-based models (GNNs, SMILESTransformer, DMPNN)
-- Atom-level importance mapping
-- RDKit-based molecular visualization with importance coloring
-- Sample prediction visualizations comparing all models
-- Molecular graph structure visualizations
-
-### Visualization
-- 2D molecule drawings with atom-level importance heatmaps
-- NetworkX-based graph structure visualizations
-- Grid visualizations for multiple molecules
-- Embedding visualizations (t-SNE/UMAP)
-- Performance comparison charts
-- ROC and Precision-Recall curves
-
-## Configuration
-
-Default configuration is provided in `src/utils.py`. Key parameters:
-
-### Fingerprint
-- `radius`: 2
-- `n_bits`: 2048
-
-### Baseline Model
-- `hidden_dims`: [512, 256, 128]
-- `dropout`: 0.2
-
-### Training
-- `num_epochs`: 50
-- `learning_rate`: 0.001
-- `batch_size`: 128
-- `device`: "cpu" (or "cuda" if available)
-
-### torch-molecule
-- `model_type`: "BFGNN", "GRIN", or "SMILESTransformer"
-- `n_trials`: 20 (number of hyperparameter search trials)
-
-## Dependencies
-
-See `env/environment.yml` for full list. Key dependencies:
-
-- **Python**: 3.10+
-- **PyTorch**: For deep learning models
-- **RDKit**: Molecular informatics and visualization
-- **torch-molecule**: Molecular AI library
-- **torch-geometric, torch-scatter**: Graph neural network operations
-- **DeepChem**: Dataset loading (alternative: PyTDC)
-- **NumPy, Pandas, Scikit-learn**: Data processing and metrics
-- **Matplotlib, Seaborn**: Visualization
-- **NetworkX**: Graph structure visualization
-- **Jupyter**: Interactive notebooks
-- **Optuna**: Hyperparameter optimization
-
-## Results Summary
-
-See `results/README.md` for detailed results and `results/overall_results.csv` for the complete comparison table.
-
-### Best Model: SMILESGNN
-
-The SMILESGNN multimodal model achieves the best performance across all metrics:
-- **AUC-ROC: 0.9971** (excellent discriminative ability)
-- **Accuracy: 0.9797** (high overall accuracy)
-- **F1 Score: 0.8696** (excellent balance for imbalanced dataset)
-- **AUPRC: 0.9669** (strong precision-recall performance)
-
-### Key Findings
-
-1. **Multimodal fusion (SMILESGNN)** achieves the best performance by combining sequence and graph representations
-2. **Sequence-based models (SMILESTransformer)** achieve best single-modality performance (AUC-ROC: 0.9804, F1: 0.7826)
-3. **Graph-based models** show competitive performance:
-   - **GIN** has the best F1 (0.5882) among single-modality graph models
-   - **BFGNN** and **DMPNN** show strong AUC-ROC but struggle with F1 due to class imbalance
-4. **Baseline MLP** provides a simple baseline but is outperformed by more sophisticated architectures
-5. Class imbalance handling (Focal Loss, weighted sampling) is crucial for minority class prediction
-
-### Model Agreement
-
-Error overlap analysis shows:
-- Models often agree on correctly classified examples
-- Different architectures make different types of errors
-- Ensemble approaches could improve robustness
-
-## Troubleshooting
-
-### Common Issues
-
-1. **torch-scatter installation fails (macOS)**
-   - Solution: Install PyTorch first, then torch-scatter
-   - Use the automated script: `./env/install-pip3.sh`
-
-2. **RDKit import errors**
-   - Solution: Install via conda (recommended) or `rdkit-pypi` via pip
-
-3. **NetworkX not available**
-   - Solution: `pip install networkx` for graph visualizations
-
-4. **Dataset download fails**
-   - Solution: Check internet connection and DeepChem/PyTDC installation
-   - Dataset will cache in `data/` directory after first download
-
-5. **Memory errors during training**
-   - Solution: Reduce batch size in configuration
-   - Use smaller fingerprint size for baseline model
-
-## Citation
-
-If you use this code in your research, please cite:
-
-```bibtex
-@software{clinical_toxicity_prediction,
-  title={Clinical Drug Toxicity Prediction with torch-molecule},
-  author={Nguyen, Nghia},
-  year={2025},
-  url={https://github.com/nghianguyen7171/molecule}
-}
-```
-
-## References
-
-### Model Papers
-
-[1] **Rogers, D., & Hahn, M.** (2010). Extended-Connectivity Fingerprints. *Journal of Chemical Information and Modeling*, 50(5), 742-754. [DOI: 10.1021/ci100050t](https://pubs.acs.org/doi/10.1021/ci100050t)
-
-[2] **Kipf, T. N., & Welling, M.** (2017). Semi-Supervised Classification with Graph Convolutional Networks. *International Conference on Learning Representations (ICLR)*. [arXiv:1609.02907](https://arxiv.org/abs/1609.02907)
-
-[3] **Gilmer, J., Schoenholz, S. S., Riley, P. F., Vinyals, O., & Dahl, G. E.** (2017). Neural Message Passing for Quantum Chemistry. *International Conference on Machine Learning (ICML)*. [arXiv:1704.01212](https://arxiv.org/abs/1704.01212)
-
-[4] **Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., & Polosukhin, I.** (2017). Attention is All You Need. *Advances in Neural Information Processing Systems (NeurIPS)*. [arXiv:1706.03762](https://arxiv.org/abs/1706.03762)
-
-### Dataset Papers
-
-[5] **Wu, Z., Ramsundar, B., Feinberg, E. N., Gomes, J., Geniesse, C., Pappu, A. S., Leswing, K., & Pande, V.** (2018). MoleculeNet: A Benchmark for Molecular Machine Learning. *Chemical Science*, 9, 513-530. [DOI: 10.1039/C7SC02664A](https://pubs.rsc.org/en/content/articlelanding/2018/sc/c7sc02664a)
-
-**ClinTox Dataset**: The ClinTox dataset is part of the MoleculeNet benchmark, comparing drugs approved by the FDA with drugs that failed clinical trials due to toxicity.
-
-### Libraries and Tools
-
-- **torch-molecule**: [https://github.com/liugangcode/torch-molecule](https://github.com/liugangcode/torch-molecule) - A molecular AI library with sklearn-style interface
-- **RDKit**: [https://www.rdkit.org/](https://www.rdkit.org/) - Open-source cheminformatics toolkit
-- **DeepChem**: [https://deepchem.io/](https://deepchem.io/) - Deep learning library for drug discovery and quantum chemistry
-- **PyTorch**: [https://pytorch.org/](https://pytorch.org/) - Deep learning framework
-- **NetworkX**: [https://networkx.org/](https://networkx.org/) - Network analysis library for graph visualizations
-
-## License
-
-This is a research prototype project.
-
-## Contact
-
-For questions or issues, please open an issue on GitHub.
+> **Runtime directories** `data/` and `models/` are created automatically during training and excluded from version control.
 
 ---
 
-**Last Updated:** January 2025
+## Setup
+
+### Option A — Conda (recommended)
+
+```bash
+# 1. Create and activate environment
+conda env create -f environment.yml
+conda activate drug-tox-env
+
+# 2. Install Jupyter kernel
+python -m ipykernel install --user --name drug-tox-env --display-name "Python (drug-tox-env)"
+```
+
+### Option B — Pip (Linux/CUDA)
+
+```bash
+# 1. PyTorch with CUDA 12.1
+pip install torch==2.4.0 --index-url https://download.pytorch.org/whl/cu121
+
+# 2. PyTorch Geometric (must match torch version)
+pip install torch-scatter torch-geometric \
+    -f https://data.pyg.org/whl/torch-2.4.0+cu121.html
+
+# 3. RDKit
+conda install rdkit -c conda-forge   # or: pip install rdkit-pypi
+
+# 4. All other dependencies
+pip install -r requirements.txt
+```
+
+**CPU-only:** replace `cu121` with `cpu` in both URLs above.
+
+**Verified environment:** Python 3.11, PyTorch 2.4.0+cu121, torch-geometric 2.7.0, CUDA 12.1 (NVIDIA RTX 3060).
+
+---
+
+## Reproducing Results
+
+### SMILESGNN (main model)
+
+```bash
+python scripts/train_hybrid.py --device cuda
+# CPU: python scripts/train_hybrid.py --device cpu
+```
+
+Output saved to `models/smilesgnn_model/`:
+- `best_model.pt` — model weights (best validation F1)
+- `tokenizer.pkl` — fitted SMILES tokenizer
+- `smilesgnn_model_metrics.txt` — test metrics
+- `training_curves.png` — loss / AUC-ROC / F1 history
+
+**Expected results** (stochastic; AUC-ROC and AUPRC are stable across runs):
+
+| Metric | Paper | Typical range |
+|---|---|---|
+| AUC-ROC | 0.997 | 0.993–0.997 |
+| AUPRC | 0.967 | 0.950–0.967 |
+| F1 | 0.870 | 0.818–0.870 |
+| Accuracy | 0.980 | 0.973–0.980 |
+
+> Small F1/accuracy variance (~0.05) is expected: the test set contains only **10 toxic samples**, so a single prediction flip changes F1 by ~0.05.
+
+### GATv2 and GIN baselines
+
+```bash
+python scripts/train_gatv2.py --device cuda
+python scripts/train_gin.py   --device cuda
+```
+
+### Baseline MLP and torch-molecule models
+
+Run the notebooks in order (requires Jupyter):
+
+```bash
+jupyter notebook
+```
+
+| Notebook | Model | Notes |
+|---|---|---|
+| `02_training_baseline.ipynb` | Baseline MLP | ~2 min |
+| `03_training_gnn.ipynb` | BFGNN | ~1–2h (Optuna, 20 trials) |
+| `03_training_grin.ipynb` | GRIN | ~1–2h (Optuna, 20 trials) |
+| `03_training_smilestransformer.ipynb` | SMILESTransformer | ~1–2h (Optuna, 20 trials) |
+
+### Consolidate all results and regenerate figures
+
+```bash
+python scripts/consolidate_results.py
+python scripts/generate_curves.py
+```
+
+---
+
+## Streamlit Inference App
+
+After training SMILESGNN, launch the interactive toxicity predictor:
+
+```bash
+conda activate drug-tox-env
+cd /path/to/molecule
+streamlit run app.py
+```
+
+The app opens at `http://localhost:8501` and provides two tabs:
+
+---
+
+### Tab 1 — Batch Screening
+
+Score an entire compound library and rank by P(toxic).
+
+**Input options:**
+- **Upload a file** — CSV, XLSX, or TXT (see `test_data/` for ready-made examples)
+- **Paste SMILES** — one per line, optionally `SMILES<TAB>name`
+
+**File format requirements:**
+
+| Format | Required column | Optional columns |
+|---|---|---|
+| CSV / XLSX | `smiles` (case-insensitive) | `name`, `label` / `ct_tox` |
+| TXT | One SMILES per line | `SMILES<TAB>name` per line |
+
+**Output:**
+- Summary metrics: screened / flagged toxic / passed / parse errors
+- Probability distribution histogram (coloured by true label if provided)
+- Pie chart of flagged vs. passed at the chosen threshold
+- Ranked results table (toxic rows highlighted in red)
+- CSV download of full results
+
+**Quick demo:**
+```
+Upload → test_data/screening_library.csv
+Expected: ~10 flagged toxic, ~20 passed, AUC-ROC ≈ 0.997
+```
+
+**Sidebar controls:**
+| Control | Default | Effect |
+|---|---|---|
+| Decision threshold | 0.5 | P(toxic) ≥ threshold → flagged as Toxic |
+| GNNExplainer epochs | 200 | Controls attribution quality in Tab 2 |
+
+---
+
+### Tab 2 — Deep Dive (Explain)
+
+Explain **why** the model flags a single compound, with atom- and bond-level importance scores from GNNExplainer.
+
+**Workflow:**
+1. Click a quick-fill button (Thalidomide, 5-FU, Aspirin, Caffeine) **or** type any SMILES
+2. Click **Predict + Explain**
+3. Stage A — instant toxicity prediction (P(toxic), red/green banner)
+4. Stage B — GNNExplainer runs on the graph pathway and produces:
+   - Two-panel atom/bond heatmap (red = high importance, green = low)
+   - Full atom importance table (element, hybridization, ring membership, aromaticity)
+   - Top-10 bond importance table
+   - CSV download for both tables
+
+> **Note:** GNNExplainer explains the **GATv2 graph pathway only**. The SMILES Transformer embedding is frozen per molecule. Treat atom/bond scores as structural hypotheses rather than definitive attributions.
+
+---
+
+## Explainability
+
+### GNNExplainer — CLI
+
+For scripted or batch explanation without the UI:
+
+```bash
+# Single molecule
+python scripts/explain_smilesgnn.py \
+    --smiles "O=C1CCC(=O)N1c1ccc2c(c1)C(=O)N(C2=O)" \
+    --device cuda
+
+# Save PNG to disk
+python scripts/explain_smilesgnn.py \
+    --smiles "O=C1CCC(=O)N1c1ccc2c(c1)C(=O)N(C2=O)" \
+    --save-dir output/explanations --device cuda
+
+# Batch: all toxic molecules in the test split
+python scripts/explain_smilesgnn.py \
+    --split test --label-filter 1 \
+    --element-chart --save-dir output/explanations
+```
+
+**Key flags:**
+
+| Flag | Default | Description |
+|---|---|---|
+| `--smiles` | — | Single SMILES (mutually exclusive with `--split`) |
+| `--split` | — | Dataset split: `train`, `val`, or `test` |
+| `--label-filter` | None | `1` = toxic only, `0` = non-toxic only |
+| `--target-class` | 1 | Class to explain (1 = toxic) |
+| `--epochs` | 200 | GNNExplainer optimisation steps |
+| `--device` | cpu | `cpu` or `cuda` |
+| `--save-dir` | None | Save PNGs (interactive display if omitted) |
+| `--element-chart` | off | Also produce element-level importance bar chart |
+
+### GNNExplainer — Notebook
+
+```bash
+jupyter notebook notebooks/07_gnnexplainer.ipynb
+```
+
+Step-by-step walkthrough: load the trained model → explain Thalidomide →
+batch-explain all toxic test molecules → aggregate element-level importance
+scores to identify shared structural alerts.
+
+### Programmatic Inference
+
+```bash
+jupyter notebook notebooks/08_inference.ipynb
+```
+
+Demonstrates the `src/inference.py` API directly:
+- `load_model()` — load checkpoint + tokenizer
+- `predict_batch()` — batch score a list of SMILES → ranked DataFrame
+- Integrated pipeline: batch predict → explain top toxic hits
+
+![Confusion Matrices](assets/confusion_matrices.png)
+
+---
+
+## Citation
+
+```bibtex
+@inproceedings{nguyen2026smilesgnn,
+  title     = {Advancing Clinical Toxicity Prediction Through Multimodal Fusion
+               of SMILES Sequences and Molecular Graph Representation},
+  author    = {Nguyen, Thuy-Quynh and Nguyen, Trong-Nghia and Nguyen, Quang-Minh
+               and Le, Duc-Minh and Ho, Nhat-Minh Nguyen and Doan, Thanh-Long Dai},
+  year      = {2026}
+}
+```
+
+---
+
+## License
+
+This project is released for research use. The ClinTox dataset is part of [MoleculeNet](https://moleculenet.org/) (MIT License).

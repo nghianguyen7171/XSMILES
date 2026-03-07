@@ -1,80 +1,44 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
 *.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
+.eggs/
+dist/
+build/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-*.ipynb_checkpoints/
+# Jupyter
+.ipynb_checkpoints/
 
-# Environment (but keep env/ directory structure for setup files)
-env/bin/
-env/include/
-env/lib/
-env/share/
-*.pyc
+# Runtime artifacts (recreated by training)
+data/
+models/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Priority 3 notebooks (kept locally, not uploaded to GitHub)
+notebooks/04_explainability_and_visualization.ipynb
+notebooks/05_results_and_error_analysis.ipynb
+notebooks/06_representation.ipynb
 
-# Data files (large datasets - cache directory)
-data/clintox-featurized/
-data/*.csv.gz
+# Claude Code config
+.claude/
+
+# Serialized objects
 *.pkl
+*.pt
+*.pth
 *.h5
 *.hdf5
 
-# Model files (large trained models)
-models/*.pt
-models/*.pkl
-models/*.pth
-models/*.txt
-
-# Output logs (but keep figures for README)
-output/logs/
-output/*.txt
-
-# Other markdown files (only README.md should be tracked)
-backup-context.md
-FINAL_STATUS.md
-IMMEDIATE_NEXT_STEPS.md
-INSTALL.md
-INSTALLATION_SUCCESS.md
-KERNEL_FIX.md
-NOTEBOOK_ORDER.md
-QUICK_START.md
-REFACTORING_GUIDE.md
-TORCH_MOLECULE_TRAINING_ISSUE.md
-TROUBLESHOOTING.md
+# Logs
+*.log
+*.tmp
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-
-# Temporary files
-*.tmp
-*.temp
+# IDE
+.vscode/
+.idea/
+*.swp
+*~

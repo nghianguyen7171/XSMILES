@@ -1,0 +1,38 @@
+# SMILESGNN — Clinical Toxicity Prediction
+# Install in this order on Linux/CUDA:
+#
+#   pip install torch==2.4.0 --index-url https://download.pytorch.org/whl/cu121
+#   pip install torch-scatter torch-geometric -f https://data.pyg.org/whl/torch-2.4.0+cu121.html
+#   pip install -r requirements.txt
+#
+# For CPU-only:
+#   pip install torch==2.4.0
+#   pip install torch-scatter torch-geometric
+#   pip install -r requirements.txt
+#
+# For conda (recommended), use environment.yml instead.
+
+numpy<2.0
+pandas
+scikit-learn
+matplotlib
+seaborn
+umap-learn
+transformers>=4.20.0
+networkx
+matplotlib-venn
+pillow
+
+# Dataset loading
+deepchem
+pytdc
+
+# torch-molecule (BFGNN, GRIN, SMILESTransformer baselines)
+scipy>=1.14.1
+huggingface_hub>=0.22.2
+optuna>=4.0.0
+torch-molecule
+
+# Jupyter (for notebooks)
+jupyter
+ipykernel
