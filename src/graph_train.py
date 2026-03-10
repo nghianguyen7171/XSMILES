@@ -378,6 +378,11 @@ def evaluate_model(
     all_labels = np.array(all_labels)
     all_logits = np.array(all_logits)
     
+    # Guard against NaN/Inf from early-epoch numerical instability
+    # (observed on Windows with certain sklearn/numpy versions)
+    if not np.all(np.isfinite(all_preds)):
+        all_preds = np.nan_to_num(all_preds, nan=0.5, posinf=1.0, neginf=0.0)
+    
     # Binary predictions (threshold = 0.5)
     binary_preds = (all_preds > 0.5).astype(int)
     
