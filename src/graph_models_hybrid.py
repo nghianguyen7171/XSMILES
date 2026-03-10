@@ -99,6 +99,9 @@ class SimpleSMILESEncoder(nn.Module):
             num_layers=num_layers
         )
         
+        # Output normalization — controls magnitude before cross-attention
+        self.output_norm = nn.LayerNorm(d_model)
+        
         # Pooling layer (CLS token approach - use first token or mean pooling)
         self.pooling = 'mean'  # 'cls', 'mean', 'max'
     
@@ -146,7 +149,7 @@ class SimpleSMILESEncoder(nn.Module):
         else:  # max
             graph_repr = x.max(dim=1)[0]
         
-        return graph_repr
+        return self.output_norm(graph_repr)
 
 
 class SMILESGraphHybridPredictor(nn.Module):
@@ -297,8 +300,9 @@ class SMILESGraphHybridPredictor(nn.Module):
                 dropout=dropout,
                 batch_first=True
             )
-            # Project graph to smiles dimension
+            # Project graph to smiles dimension + normalize for cross-attention stability
             self.graph_proj = nn.Linear(graph_repr_dim, smiles_d_model)
+            self.graph_proj_norm = nn.LayerNorm(smiles_d_model)
             fused_dim = smiles_d_model * 2  # [smiles_repr, attended_graph_repr]
         elif fusion_method == "weighted":
             # Learned weighted combination
@@ -429,7 +433,8 @@ class SMILESGraphHybridPredictor(nn.Module):
             fused_repr = torch.cat([smiles_repr, graph_repr], dim=1)
         elif self.fusion_method == "attention":
             # Use SMILES as query, graph as key/value
-            graph_repr_proj = self.graph_proj(graph_repr)  # (batch_size, smiles_d_model)
+            # LayerNorm on graph projection prevents cross-attention overflow on CPU
+            graph_repr_proj = self.graph_proj_norm(self.graph_proj(graph_repr))  # (batch_size, smiles_d_model)
             graph_repr_proj = graph_repr_proj.unsqueeze(1)  # (batch_size, 1, smiles_d_model)
             smiles_repr_expanded = smiles_repr.unsqueeze(1)  # (batch_size, 1, smiles_d_model)
             
@@ -450,6 +455,9 @@ class SMILESGraphHybridPredictor(nn.Module):
         
         # Predictor
         logits = self.predictor(fused_repr)
+        
+        # Clamp logits to prevent NaN from extreme values (CPU stability)
+        logits = torch.clamp(logits, min=-20.0, max=20.0)
         
         return logits
 
