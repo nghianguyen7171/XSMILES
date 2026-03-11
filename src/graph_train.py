@@ -253,6 +253,12 @@ def train_gatv2_model(
             # Compute loss
             loss = criterion(logits, labels)
             
+            # Skip NaN/Inf losses — prevents corrupted gradients from
+            # poisoning model weights (observed on CPU, early epochs)
+            if torch.isnan(loss) or torch.isinf(loss):
+                optimizer.zero_grad()
+                continue
+            
             # Backward pass
             loss.backward()
             
@@ -263,7 +269,7 @@ def train_gatv2_model(
             
             train_losses.append(loss.item())
         
-        avg_train_loss = np.mean(train_losses)
+        avg_train_loss = np.mean(train_losses) if train_losses else float('nan')
         history['train_loss'].append(avg_train_loss)
         
         # Validation phase
