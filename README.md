@@ -21,8 +21,6 @@ Evaluated on the [ClinTox](https://moleculenet.org/datasets-1) dataset (1,480 mo
 | SMILESTransformer | 0.980 | 0.966 | 0.783 | 0.665 |
 | **SMILESGNN** | **0.997** | **0.980** | **0.870** | **0.967** |
 
-![PR Curves](assets/pr_curves.png)
-
 ---
 
 ## Model Explainability & Demo Workflow ⭐
@@ -107,7 +105,7 @@ Molecular graph ──► GATv2 Encoder (3 layers, 4 heads, JK) ─────�
 | Regularization | Dropout=0.4, BatchNorm, weighted sampler |
 | Early stopping | patience=15, monitor=val-F1 |
 
-![SMILES-Graph Pairs](assets/smiles_graph_pairs.png)
+![SMILES-Graph Pairs](assets/gnnexplainer_ui.png)
 
 ---
 
