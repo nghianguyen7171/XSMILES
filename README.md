@@ -30,28 +30,42 @@ Tasks cover nuclear receptor disruption (NR-\*) and stress-response pathways (SR
 
 ### Overall Comparison
 
+![Tox21 Model Comparison](assets/tox21_model_comparison.png)
+
 | Model | Mean AUC-ROC | Mean PR-AUC | Interpretability |
 |---|---|---|---|
 | ECFP4 + XGBoost | 0.7052 | 0.2962 | SHAP → substructure bits (faithful) |
 | SMILESGNN (GATv2+Transformer) | 0.7284 | 0.2685 | GNNExplainer / GradCAM (post-hoc) |
-| **AttentiveFP** | **0.7311** | **0.3164** | GradCAM on intrinsic attention (faithful) |
+| AttentiveFP | 0.7311 | 0.3164 | GradCAM on intrinsic attention (faithful) |
+| **ChemBERTa-2** | **0.7420** | **0.3174** | Gradient×token importance (faithful) |
 
 ### Per-Task AUC-ROC (Test Set)
 
-| Task | ECFP4+XGB | SMILESGNN | AttentiveFP |
-|---|---|---|---|
-| NR-AR | 0.7166 | 0.7130 | 0.7148 |
-| NR-AR-LBD | 0.7954 | 0.8301 | **0.8325** |
-| NR-AhR | 0.8177 | 0.7819 | 0.7970 |
-| NR-Aromatase | 0.7390 | 0.7025 | 0.7149 |
-| NR-ER | 0.7096 | 0.6870 | 0.7246 |
-| NR-ER-LBD | 0.6963 | 0.7081 | 0.7000 |
-| NR-PPAR-gamma | 0.6448 | 0.6447 | 0.6903 |
-| SR-ARE | 0.7220 | 0.7357 | 0.6693 |
-| SR-ATAD5 | 0.6779 | 0.6957 | 0.7080 |
-| SR-HSE | 0.6551 | 0.6768 | 0.7205 |
-| SR-MMP | 0.7617 | 0.7773 | 0.8067 |
-| SR-p53 | 0.6862 | 0.6933 | 0.6941 |
+| Task | ECFP4+XGB | SMILESGNN | AttentiveFP | ChemBERTa-2 |
+|---|---|---|---|---|
+| NR-AR | 0.7166 | 0.7130 | 0.7148 | 0.7445 |
+| NR-AR-LBD | 0.7954 | 0.8301 | **0.8325** | 0.8103 |
+| NR-AhR | 0.8177 | 0.7819 | 0.7970 | 0.8085 |
+| NR-Aromatase | 0.7390 | 0.7025 | 0.7149 | 0.7159 |
+| NR-ER | 0.7096 | 0.6870 | 0.7246 | 0.6626 |
+| NR-ER-LBD | 0.6963 | 0.7081 | 0.7000 | 0.7592 |
+| NR-PPAR-gamma | 0.6448 | 0.6447 | 0.6903 | 0.6919 |
+| SR-ARE | 0.7220 | 0.7357 | 0.6693 | 0.6917 |
+| SR-ATAD5 | 0.6779 | 0.6957 | 0.7080 | 0.6787 |
+| SR-HSE | 0.6551 | 0.6768 | 0.7205 | **0.7799** |
+| SR-MMP | 0.7617 | 0.7773 | 0.8067 | 0.7980 |
+| SR-p53 | 0.6862 | 0.6933 | 0.6941 | **0.7622** |
+
+### Token Importance Visualisation (ChemBERTa-2)
+
+Gradient×embedding importance scores identify which SMILES tokens drive the toxicity
+prediction for each Tox21 assay — faithfully attributed to the model's internal
+representations without post-hoc approximation.
+
+![ChemBERTa-2 Token Importance](assets/token_importance_chemberta.png)
+
+*Red = high importance, Green = low importance. Each panel shows a toxic compound
+from the test set for a different assay endpoint.*
 
 ### Reproducing Tox21 Results
 
