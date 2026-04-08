@@ -1,0 +1,58 @@
+model:
+  name: "SMILESGraphHybridPredictor"
+  num_graph_layers: 3
+  hidden_dim: 96
+  graph_model: "gatv2"
+  num_heads: 4
+  dropout: 0.4
+  use_residual: true
+  use_jk: true
+  jk_mode: "cat"
+  graph_pooling: "meanmax"
+
+  # SMILES encoder settings (identical to ClinTox for fair comparison)
+  smiles_vocab_size: 100
+  smiles_max_length: 128
+  smiles_d_model: 96
+  smiles_num_layers: 2
+
+  # Fusion settings
+  fusion_method: "attention"
+
+  # Multi-task output head (12 Tox21 assays)
+  output_dim: 12   # ← changed from 1 (ClinTox) to 12 (Tox21)
+
+training:
+  num_epochs: 100
+  batch_size: 32
+  learning_rate: 0.0005
+  weight_decay: 0.0001
+  early_stopping_patience: 15
+  early_stopping_metric: "mean_auc_roc"  # ← multi-task primary metric
+  loss_type: "masked_focal"              # ← handles NaN labels
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+  use_weighted_sampler: true
+
+data:
+  dataset: "tox21"       # ← selects Tox21 loader in scripts/train.py
+  cache_dir: "data"
+  split_type: "scaffold"
+  seed: 42
+  # Explicit task list (for documentation and reproducibility)
+  task_names:
+    - "NR-AR"
+    - "NR-AR-LBD"
+    - "NR-AhR"
+    - "NR-Aromatase"
+    - "NR-ER"
+    - "NR-ER-LBD"
+    - "NR-PPAR-gamma"
+    - "SR-ARE"
+    - "SR-ATAD5"
+    - "SR-HSE"
+    - "SR-MMP"
+    - "SR-p53"
+
+output:
+  model_dir: "models/tox21_smilesgnn_model"

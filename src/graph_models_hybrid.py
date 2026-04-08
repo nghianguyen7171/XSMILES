@@ -10,6 +10,7 @@ This multimodal fusion approach aims to achieve better performance than either
 representation alone.
 """
 
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -64,6 +65,18 @@ class SimpleSMILESEncoder(nn.Module):
     and produce a fixed-size molecular representation.
     """
     
+    @staticmethod
+    def _make_sinusoidal(max_seq_len: int, d_model: int) -> torch.Tensor:
+        """Construct fixed sinusoidal positional encoding (Vaswani et al., 2017)."""
+        position = torch.arange(max_seq_len).unsqueeze(1).float()
+        div_term = torch.exp(
+            torch.arange(0, d_model, 2).float() * -(math.log(10000.0) / d_model)
+        )
+        pe = torch.zeros(max_seq_len, d_model)
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        return pe
+
     def __init__(
         self,
         vocab_size: int = 100,  # SMILES vocabulary size
@@ -72,19 +85,25 @@ class SimpleSMILESEncoder(nn.Module):
         num_layers: int = 3,
         dim_feedforward: int = 256,
         dropout: float = 0.1,
-        max_seq_len: int = 128
+        max_seq_len: int = 128,
+        pos_encoder_type: str = "learned",
     ):
         super().__init__()
         self.d_model = d_model
         self.max_seq_len = max_seq_len
-        
+
         # Token embedding
         self.token_embedding = nn.Embedding(vocab_size, d_model)
-        
-        # Positional encoding
-        self.pos_encoder = nn.Parameter(
-            torch.randn(max_seq_len, d_model) * 0.02
-        )
+
+        # Positional encoding — learned (default) or fixed sinusoidal
+        self.pos_encoder_type = pos_encoder_type
+        if pos_encoder_type == "sinusoidal":
+            pe = self._make_sinusoidal(max_seq_len, d_model)
+            self.register_buffer("pos_encoder", pe)   # not a Parameter → not trained
+        else:
+            self.pos_encoder = nn.Parameter(
+                torch.randn(max_seq_len, d_model) * 0.02
+            )
         
         # Transformer encoder
         encoder_layer = nn.TransformerEncoderLayer(
@@ -180,7 +199,8 @@ class SMILESGraphHybridPredictor(nn.Module):
         smiles_d_model: int = 128,
         smiles_num_layers: int = 3,
         fusion_method: Literal["concat", "attention", "weighted"] = "attention",
-        output_dim: int = 1
+        output_dim: int = 1,
+        smiles_pos_encoder_type: str = "learned",
     ):
         """
         Initialize SMILESGraphHybridPredictor.
@@ -201,7 +221,8 @@ class SMILESGraphHybridPredictor(nn.Module):
             smiles_d_model: SMILES encoder dimension
             smiles_num_layers: Number of transformer layers in SMILES encoder
             fusion_method: How to fuse SMILES and graph representations
-            output_dim: Output dimension (1 for binary classification)
+            output_dim: Output dimension (1 for single-task, 12 for Tox21)
+            smiles_pos_encoder_type: "learned" (default) or "sinusoidal"
         """
         super().__init__()
         
@@ -219,7 +240,8 @@ class SMILESGraphHybridPredictor(nn.Module):
             num_layers=smiles_num_layers,
             dim_feedforward=smiles_d_model * 2,
             dropout=dropout,
-            max_seq_len=128
+            max_seq_len=128,
+            pos_encoder_type=smiles_pos_encoder_type,
         )
         
         # Graph Encoder - Node embedding
@@ -478,6 +500,7 @@ def create_hybrid_model(
     smiles_d_model: int = 128,
     smiles_num_layers: int = 3,
     fusion_method: str = "attention",
+    smiles_pos_encoder_type: str = "learned",
     **kwargs
 ) -> SMILESGraphHybridPredictor:
     """
@@ -520,6 +543,7 @@ def create_hybrid_model(
         smiles_d_model=smiles_d_model,
         smiles_num_layers=smiles_num_layers,
         fusion_method=fusion_method,
+        smiles_pos_encoder_type=smiles_pos_encoder_type,
         **kwargs
     )
 

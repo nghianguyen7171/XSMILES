@@ -1,0 +1,27 @@
+model:
+  name: "AttentiveFPPredictor"
+  hidden_channels: 200
+  num_layers: 2
+  num_timesteps: 2
+  dropout: 0.2
+  num_tasks: 12
+
+training:
+  num_epochs: 100
+  batch_size: 64
+  learning_rate: 0.0003
+  weight_decay: 0.0001
+  early_stopping_patience: 20
+  early_stopping_metric: "mean_auc_roc"
+  loss_type: "masked_focal"
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+  use_weighted_sampler: true
+
+data:
+  cache_dir: "data"
+  split_type: "scaffold"
+  seed: 42
+
+output:
+  model_dir: "models/tox21_attentivefp_model"

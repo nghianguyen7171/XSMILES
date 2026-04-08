@@ -1,0 +1,43 @@
+model:
+  name: "SMILESGraphHybridPredictor"
+  num_graph_layers: 3
+  hidden_dim: 96
+  graph_model: "gatv2"
+  num_heads: 4
+  dropout: 0.4
+  use_residual: true
+  use_jk: true
+  jk_mode: "cat"
+  graph_pooling: "meanmax"
+
+  # SMILES encoder settings
+  smiles_vocab_size: 100
+  smiles_max_length: 128
+  smiles_d_model: 96
+  smiles_num_layers: 2
+
+  # Fusion settings
+  fusion_method: "attention"
+
+  # Positional encoding: sinusoidal (ablation) vs learned (original)
+  smiles_pos_encoder_type: "sinusoidal"   # ← CHANGED from default "learned"
+
+training:
+  num_epochs: 100
+  batch_size: 32
+  learning_rate: 0.0005
+  weight_decay: 0.0001
+  early_stopping_patience: 15
+  early_stopping_metric: "f1"
+  loss_type: "focal"
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+  use_weighted_sampler: true
+
+data:
+  cache_dir: "data"
+  split_type: "scaffold"
+  seed: 42
+
+output:
+  model_dir: "models/smilesgnn_ablation_model"   # ← CHANGED from smilesgnn_model

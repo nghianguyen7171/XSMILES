@@ -5,7 +5,7 @@ Converts SMILES strings to torch_geometric.data.Data objects with rich
 node (atom) and edge (bond) features for molecular property prediction.
 """
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 import numpy as np
 import torch
 from torch_geometric.data import Data
@@ -159,30 +159,47 @@ def get_bond_features(bond: Chem.Bond) -> np.ndarray:
     return np.array(features, dtype=np.float32)
 
 
-def smiles_to_pyg_data(smiles: str, label: Optional[float] = None) -> Optional[Data]:
+def smiles_to_pyg_data(
+    smiles: str,
+    label: Optional[Union[float, List[float], np.ndarray]] = None,
+) -> Optional[Data]:
     """
     Convert a SMILES string to a PyTorch Geometric Data object.
-    
+
+    Supports both single-task (scalar label) and multi-task (array label)
+    targets, enabling use with ClinTox and Tox21 without code changes.
+
     Args:
-        smiles: SMILES string representation of the molecule
-        label: Optional label (e.g., toxicity) for supervised learning
-    
+        smiles: SMILES string representation of the molecule.
+        label:  Optional label for supervised learning.
+                - float / int  → single-task, stored as y of shape (1,)
+                - list / array → multi-task, stored as y of shape (num_tasks,)
+                  NaN values are preserved for masked multi-task loss.
+
     Returns:
         torch_geometric.data.Data object with:
-        - x: Node (atom) features of shape (num_nodes, num_node_features)
-        - edge_index: Edge connectivity in COO format of shape (2, num_edges)
-        - edge_attr: Edge (bond) features of shape (num_edges, num_edge_features)
-        - y: Optional graph-level label (scalar)
-        - smiles: Original SMILES string (stored as attribute)
-    
+        - x:         Node (atom) features, shape (num_nodes, 25)
+        - edge_index: Edge connectivity COO format, shape (2, num_edges)
+        - edge_attr:  Edge (bond) features, shape (num_edges, 17)
+        - y:          Graph-level label(s), shape (1,) or (num_tasks,)
+        - smiles:     Original SMILES string
+
     Example:
-        >>> data = smiles_to_pyg_data("CCO", label=0.0)
-        >>> print(data.num_nodes, data.num_edges)
+        >>> data = smiles_to_pyg_data("CCO", label=0.0)          # single-task
+        >>> data = smiles_to_pyg_data("CCO", label=[1,0,np.nan]) # multi-task
     """
     mol = smiles_to_mol(smiles)
     if mol is None:
         return None
-    
+
+    # RDKit 2025: ensure implicit valences are computed before accessing H counts.
+    # Required when MolFromSmiles falls back to sanitize=False, or in edge cases
+    # where calcImplicitValence was not called during sanitization.
+    try:
+        mol.UpdatePropertyCache(strict=False)
+    except Exception:
+        pass
+
     # Get atom features
     atom_features = [get_atom_features(atom, mol) for atom in mol.GetAtoms()]
     if len(atom_features) == 0:
@@ -221,7 +238,15 @@ def smiles_to_pyg_data(smiles: str, label: Optional[float] = None) -> Optional[D
     
     # Add label if provided
     if label is not None:
-        data.y = torch.tensor([label], dtype=torch.float32)
+        if isinstance(label, (list, np.ndarray)):
+            # Multi-task: shape (1, num_tasks) so PyG batching yields (batch_size, num_tasks).
+            # NaN values are preserved for MaskedMultiTaskLoss.
+            data.y = torch.tensor(
+                np.array(label, dtype=np.float32), dtype=torch.float32
+            ).unsqueeze(0)   # (1, num_tasks)
+        else:
+            # Single-task: scalar → shape (1,)
+            data.y = torch.tensor([float(label)], dtype=torch.float32)
     
     # Store SMILES string as attribute (useful for debugging/visualization)
     data.smiles = smiles
@@ -231,32 +256,38 @@ def smiles_to_pyg_data(smiles: str, label: Optional[float] = None) -> Optional[D
 
 def smiles_list_to_pyg_dataset(
     smiles_list: List[str],
-    labels: Optional[List[float]] = None
+    labels: Optional[Union[List[float], List[List[float]], np.ndarray]] = None,
 ) -> List[Data]:
     """
     Convert a list of SMILES strings to a list of PyG Data objects.
-    
+
+    Handles both single-task (list of floats) and multi-task labels
+    (2-D array of shape (n_compounds, n_tasks)), transparently passing
+    each row to smiles_to_pyg_data.
+
     Args:
-        smiles_list: List of SMILES strings
-        labels: Optional list of labels corresponding to each SMILES
-    
+        smiles_list: List of SMILES strings.
+        labels:      Optional labels.
+                     - List[float] for single-task (ClinTox).
+                     - np.ndarray of shape (N, T) for multi-task (Tox21).
+
     Returns:
-        List of torch_geometric.data.Data objects
-    
+        List of torch_geometric.data.Data objects (failed SMILES skipped).
+
     Example:
-        >>> smiles = ["CCO", "CCN"]
-        >>> labels = [0.0, 1.0]
-        >>> dataset = smiles_list_to_pyg_dataset(smiles, labels)
+        >>> dataset = smiles_list_to_pyg_dataset(["CCO", "CCN"], [0.0, 1.0])
+        >>> # Multi-task:
+        >>> dataset = smiles_list_to_pyg_dataset(smiles, labels_array)
     """
     if labels is None:
         labels = [None] * len(smiles_list)
-    
+
     dataset = []
     for smiles, label in zip(smiles_list, labels):
         data = smiles_to_pyg_data(smiles, label=label)
         if data is not None:
             dataset.append(data)
-    
+
     return dataset
 
 
