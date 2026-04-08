@@ -23,6 +23,55 @@ Evaluated on the [ClinTox](https://moleculenet.org/datasets-1) dataset (1,480 mo
 
 ---
 
+## Tox21 Multi-Task Benchmark (Journal Extension)
+
+Evaluated on [Tox21](https://moleculenet.org/datasets-1) (7,831 compounds, 12 toxicity endpoints, scaffold split, seed=42).
+Tasks cover nuclear receptor disruption (NR-\*) and stress-response pathways (SR-\*).
+
+### Overall Comparison
+
+| Model | Mean AUC-ROC | Mean PR-AUC | Interpretability |
+|---|---|---|---|
+| ECFP4 + XGBoost | 0.7052 | 0.2962 | SHAP → substructure bits (faithful) |
+| SMILESGNN (GATv2+Transformer) | 0.7284 | 0.2685 | GNNExplainer / GradCAM (post-hoc) |
+| **AttentiveFP** | **0.7311** | **0.3164** | GradCAM on intrinsic attention (faithful) |
+
+### Per-Task AUC-ROC (Test Set)
+
+| Task | ECFP4+XGB | SMILESGNN | AttentiveFP |
+|---|---|---|---|
+| NR-AR | 0.7166 | 0.7130 | 0.7148 |
+| NR-AR-LBD | 0.7954 | 0.8301 | **0.8325** |
+| NR-AhR | 0.8177 | 0.7819 | 0.7970 |
+| NR-Aromatase | 0.7390 | 0.7025 | 0.7149 |
+| NR-ER | 0.7096 | 0.6870 | 0.7246 |
+| NR-ER-LBD | 0.6963 | 0.7081 | 0.7000 |
+| NR-PPAR-gamma | 0.6448 | 0.6447 | 0.6903 |
+| SR-ARE | 0.7220 | 0.7357 | 0.6693 |
+| SR-ATAD5 | 0.6779 | 0.6957 | 0.7080 |
+| SR-HSE | 0.6551 | 0.6768 | 0.7205 |
+| SR-MMP | 0.7617 | 0.7773 | 0.8067 |
+| SR-p53 | 0.6862 | 0.6933 | 0.6941 |
+
+### Reproducing Tox21 Results
+
+```bash
+# AttentiveFP (best model)
+python scripts/train_attentivefp_tox21.py \
+    --config config/tox21_attentivefp_config.yaml --device cuda
+
+# SMILESGNN multi-task
+python scripts/train.py \
+    --config config/tox21_smilesgnn_config.yaml --device cuda
+
+# ECFP4 + XGBoost baseline
+python scripts/train_fingerprint_tox21.py --device cpu
+```
+
+Results and visualisations: `notebooks/14_tox21_attentivefp.ipynb`
+
+---
+
 ## Model Explainability & Demo Workflow ⭐
 
 SMILESGNN goes beyond prediction by offering deep-dive interpretation using **GNNExplainer**. We aim to explain **why** the model flags a single compound, providing atom- and bond-level importance scores.
@@ -114,24 +163,42 @@ Molecular graph ──► GATv2 Encoder (3 layers, 4 heads, JK) ─────�
 ```
 molecule/
 ├── src/                          # Core library
-│   ├── data.py                   # ClinTox loading
+│   ├── datasets/                 # Dataset loaders (ClinTox + Tox21) ⭐
+│   │   ├── base.py               # TaskConfig dataclass
+│   │   ├── clintox.py            # ClinTox loader
+│   │   └── tox21.py              # Tox21 12-task loader
+│   ├── attentivefp_model.py      # AttentiveFP + GradCAM atom importance ⭐
 │   ├── graph_models_hybrid.py    # SMILESGNN architecture ⭐
-│   ├── gnn_explainer.py          # GNNExplainer integration ⭐
+│   ├── graph_data.py             # RDKit → PyG (RDKit 2025 compatible)
+│   ├── graph_train.py            # MaskedMultiTaskLoss, training loops
+│   ├── gnn_explainer.py          # GNNExplainer + faithfulness check ⭐
+│   ├── gradient_attribution.py   # Grad×Input full-model attribution
+│   ├── transformer_attribution.py # Integrated Gradients on SMILES Transformer
+│   ├── fingerprint.py            # ECFP4 featurisation for XGBoost
 │   ├── inference.py              # Batch inference engine (used by app.py)
 │   └── ...
 │
 ├── scripts/                      # Training & evaluation scripts
-│   ├── train_hybrid.py           # Train SMILESGNN ⭐
+│   ├── train_hybrid.py           # Train SMILESGNN (ClinTox) ⭐
+│   ├── train.py                  # Unified trainer (ClinTox + Tox21 via YAML) ⭐
+│   ├── train_attentivefp_tox21.py # Train AttentiveFP on Tox21 ⭐
+│   ├── train_fingerprint_tox21.py # Train ECFP4+XGBoost on Tox21
 │   ├── explain_smilesgnn.py      # GNNExplainer CLI ⭐
 │   └── ...
 │
 ├── notebooks/                    # Interactive workflows
 │   ├── 07_gnnexplainer.ipynb               # GNNExplainer attribution ⭐
-│   ├── 08_inference.ipynb                  # Programmatic inference walkthrough ⭐
-│   └── ...
+│   ├── 08_inference.ipynb                  # Programmatic inference walkthrough
+│   ├── 09_faithfulness.ipynb               # Faithfulness check (comprehensiveness)
+│   ├── 10_transformer_attribution.ipynb    # Integrated Gradients on SMILES
+│   ├── 11_tier_a_attribution.ipynb         # Grad×Input full-model attribution
+│   ├── 13_tox21_fingerprint.ipynb          # ECFP4+XGBoost Tox21 baseline
+│   └── 14_tox21_attentivefp.ipynb          # AttentiveFP results + GradCAM ⭐
 │
 ├── config/                       # Model hyperparameter configs (YAML)
-│   └── smilesgnn_config.yaml     # SMILESGNN ⭐
+│   ├── smilesgnn_config.yaml             # SMILESGNN (ClinTox)
+│   ├── tox21_smilesgnn_config.yaml       # SMILESGNN (Tox21) ⭐
+│   └── tox21_attentivefp_config.yaml     # AttentiveFP (Tox21) ⭐
 │
 ├── test_data/                    # Demo files for the Streamlit app
 │   ├── screening_library.csv     # 30 compounds (balanced) — main demo ⭐
