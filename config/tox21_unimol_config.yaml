@@ -1,0 +1,24 @@
+model:
+  name: "UniMolPredictor"
+  repr_batch_size: 256      # batch size for Uni-Mol representation extraction
+  hidden: 256               # MLP hidden dimension
+  dropout: 0.3
+  num_tasks: 12
+
+training:
+  num_epochs: 200
+  batch_size: 256
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-4
+  early_stopping_patience: 30
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+  use_weighted_sampler: true
+
+data:
+  cache_dir: "data"
+  split_type: "scaffold"
+  seed: 42
+
+output:
+  model_dir: "models/tox21_unimol_model"
