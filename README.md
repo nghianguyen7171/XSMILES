@@ -38,6 +38,7 @@ Tasks cover nuclear receptor disruption (NR-\*) and stress-response pathways (SR
 | ChemBERTa-PubChem | 0.7212 | 0.3288 | Gradient×token importance (faithful) |
 | SMILESGNN (GATv2+Transformer) | 0.7284 | 0.2685 | GNNExplainer / GradCAM (post-hoc) |
 | AttentiveFP | 0.7311 | 0.3164 | GradCAM on intrinsic attention (faithful) |
+| GPS Graph Transformer | 0.7247 | 0.3113 | GINEConv + MultiheadAttention per layer |
 | MoLFormer-XL | 0.7395 | 0.3529 | Gradient×token importance (faithful) |
 | ChemBERTa-2 | 0.7420 | 0.3174 | Gradient×token importance (faithful) |
 | Ensemble — simple average (ChemBERTa-2 + MoLFormer-XL + AttentiveFP) | **0.7635** | **0.3820** | — |
@@ -45,20 +46,20 @@ Tasks cover nuclear receptor disruption (NR-\*) and stress-response pathways (SR
 
 ### Per-Task AUC-ROC (Test Set)
 
-| Task | ECFP4+XGB | SMILESGNN | AttentiveFP | ChemBERTa-PubChem | MoLFormer-XL | ChemBERTa-2 | Ensemble (simple) | Ensemble (weighted) |
-|---|---|---|---|---|---|---|---|---|
-| NR-AR | 0.7166 | 0.7130 | 0.7148 | 0.6563 | 0.6917 | 0.7445 | 0.7467 | 0.7494 |
-| NR-AR-LBD | 0.7954 | 0.8301 | **0.8325** | 0.6300 | 0.7561 | 0.8103 | 0.8192 | 0.8186 |
-| NR-AhR | 0.8177 | 0.7819 | 0.7970 | 0.7936 | 0.8003 | 0.8085 | **0.8304** | 0.8285 |
-| NR-Aromatase | 0.7390 | 0.7025 | 0.7149 | 0.7401 | 0.6892 | 0.7159 | 0.7297 | 0.7179 |
-| NR-ER | 0.7096 | 0.6870 | 0.7246 | **0.7412** | 0.7016 | 0.6626 | 0.7167 | 0.7017 |
-| NR-ER-LBD | 0.6963 | 0.7081 | 0.7000 | 0.7139 | 0.7003 | 0.7592 | 0.7394 | **0.7602** |
-| NR-PPAR-gamma | 0.6448 | 0.6447 | 0.6903 | 0.6633 | **0.7901** | 0.6919 | 0.7335 | 0.7120 |
-| SR-ARE | 0.7220 | **0.7357** | 0.6693 | 0.7219 | 0.7180 | 0.6917 | 0.7222 | 0.7093 |
-| SR-ATAD5 | 0.6779 | 0.6957 | 0.7080 | 0.7439 | **0.7500** | 0.6787 | 0.7305 | 0.7212 |
-| SR-HSE | 0.6551 | 0.6768 | 0.7205 | 0.7619 | 0.7618 | 0.7799 | **0.8105** | 0.7961 |
-| SR-MMP | 0.7617 | 0.7773 | 0.8067 | 0.7850 | 0.7940 | 0.7980 | **0.8310** | 0.8298 |
-| SR-p53 | 0.6862 | 0.6933 | 0.6941 | 0.7038 | 0.7214 | 0.7622 | 0.7564 | **0.7699** |
+| Task | ECFP4+XGB | SMILESGNN | AttentiveFP | GPS | ChemBERTa-PubChem | MoLFormer-XL | ChemBERTa-2 | Ensemble (simple) | Ensemble (weighted) |
+|---|---|---|---|---|---|---|---|---|---|
+| NR-AR | 0.7166 | 0.7130 | 0.7148 | 0.7594 | 0.6563 | 0.6917 | 0.7445 | 0.7467 | 0.7494 |
+| NR-AR-LBD | 0.7954 | 0.8301 | **0.8325** | 0.7911 | 0.6300 | 0.7561 | 0.8103 | 0.8192 | 0.8186 |
+| NR-AhR | 0.8177 | 0.7819 | 0.7970 | 0.7891 | 0.7936 | 0.8003 | 0.8085 | **0.8304** | 0.8285 |
+| NR-Aromatase | 0.7390 | 0.7025 | 0.7149 | 0.7331 | 0.7401 | 0.6892 | 0.7159 | 0.7297 | 0.7179 |
+| NR-ER | 0.7096 | 0.6870 | 0.7246 | 0.6374 | **0.7412** | 0.7016 | 0.6626 | 0.7167 | 0.7017 |
+| NR-ER-LBD | 0.6963 | 0.7081 | 0.7000 | 0.6398 | 0.7139 | 0.7003 | 0.7592 | 0.7394 | **0.7602** |
+| NR-PPAR-gamma | 0.6448 | 0.6447 | 0.6903 | 0.6477 | 0.6633 | **0.7901** | 0.6919 | 0.7335 | 0.7120 |
+| SR-ARE | 0.7220 | **0.7357** | 0.6693 | 0.7045 | 0.7219 | 0.7180 | 0.6917 | 0.7222 | 0.7093 |
+| SR-ATAD5 | 0.6779 | 0.6957 | 0.7080 | 0.7084 | 0.7439 | **0.7500** | 0.6787 | 0.7305 | 0.7212 |
+| SR-HSE | 0.6551 | 0.6768 | 0.7205 | 0.7791 | 0.7619 | 0.7618 | 0.7799 | **0.8105** | 0.7961 |
+| SR-MMP | 0.7617 | 0.7773 | 0.8067 | 0.7685 | 0.7850 | 0.7940 | 0.7980 | **0.8310** | 0.8298 |
+| SR-p53 | 0.6862 | 0.6933 | 0.6941 | 0.7379 | 0.7038 | 0.7214 | 0.7622 | 0.7564 | **0.7699** |
 
 ### Token Importance Visualisation (ChemBERTa-2)
 
@@ -74,6 +75,10 @@ from the test set for a different assay endpoint.*
 ### Reproducing Tox21 Results
 
 ```bash
+# GPS Graph Transformer
+python scripts/train_gps_tox21.py \
+    --config config/tox21_gps_config.yaml --device cuda
+
 # Simple ensemble (best overall AUC)
 python scripts/ensemble_tox21.py --device cuda
 
