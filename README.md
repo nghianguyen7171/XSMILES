@@ -39,24 +39,25 @@ Tasks cover nuclear receptor disruption (NR-\*) and stress-response pathways (SR
 | SMILESGNN (GATv2+Transformer) | 0.7284 | 0.2685 | GNNExplainer / GradCAM (post-hoc) |
 | AttentiveFP | 0.7311 | 0.3164 | GradCAM on intrinsic attention (faithful) |
 | MoLFormer-XL | 0.7395 | 0.3529 | Gradient×token importance (faithful) |
-| **ChemBERTa-2** | **0.7420** | **0.3174** | Gradient×token importance (faithful) |
+| ChemBERTa-2 | 0.7420 | 0.3174 | Gradient×token importance (faithful) |
+| **Ensemble** (ChemBERTa-2 + MoLFormer-XL + AttentiveFP) | **0.7635** | **0.3820** | — |
 
 ### Per-Task AUC-ROC (Test Set)
 
-| Task | ECFP4+XGB | SMILESGNN | AttentiveFP | ChemBERTa-PubChem | MoLFormer-XL | ChemBERTa-2 |
-|---|---|---|---|---|---|---|
-| NR-AR | 0.7166 | 0.7130 | 0.7148 | 0.6563 | 0.6917 | 0.7445 |
-| NR-AR-LBD | 0.7954 | 0.8301 | **0.8325** | 0.6300 | 0.7561 | 0.8103 |
-| NR-AhR | 0.8177 | 0.7819 | 0.7970 | 0.7936 | 0.8003 | 0.8085 |
-| NR-Aromatase | 0.7390 | 0.7025 | 0.7149 | 0.7401 | 0.6892 | 0.7159 |
-| NR-ER | 0.7096 | 0.6870 | 0.7246 | 0.7412 | 0.7016 | 0.6626 |
-| NR-ER-LBD | 0.6963 | 0.7081 | 0.7000 | 0.7139 | 0.7003 | 0.7592 |
-| NR-PPAR-gamma | 0.6448 | 0.6447 | 0.6903 | 0.6633 | 0.7901 | 0.6919 |
-| SR-ARE | 0.7220 | 0.7357 | 0.6693 | 0.7219 | 0.7180 | 0.6917 |
-| SR-ATAD5 | 0.6779 | 0.6957 | 0.7080 | 0.7439 | 0.7500 | 0.6787 |
-| SR-HSE | 0.6551 | 0.6768 | 0.7205 | 0.7619 | 0.7618 | **0.7799** |
-| SR-MMP | 0.7617 | 0.7773 | 0.8067 | 0.7850 | 0.7940 | 0.7980 |
-| SR-p53 | 0.6862 | 0.6933 | 0.6941 | 0.7038 | 0.7214 | **0.7622** |
+| Task | ECFP4+XGB | SMILESGNN | AttentiveFP | ChemBERTa-PubChem | MoLFormer-XL | ChemBERTa-2 | Ensemble |
+|---|---|---|---|---|---|---|---|
+| NR-AR | 0.7166 | 0.7130 | 0.7148 | 0.6563 | 0.6917 | 0.7445 | 0.7291 |
+| NR-AR-LBD | 0.7954 | 0.8301 | **0.8325** | 0.6300 | 0.7561 | 0.8103 | 0.8174 |
+| NR-AhR | **0.8177** | 0.7819 | 0.7970 | 0.7936 | 0.8003 | 0.8085 | **0.8355** |
+| NR-Aromatase | 0.7390 | 0.7025 | 0.7149 | 0.7401 | 0.6892 | 0.7159 | 0.7323 |
+| NR-ER | 0.7096 | 0.6870 | 0.7246 | 0.7412 | 0.7016 | 0.6626 | 0.7230 |
+| NR-ER-LBD | 0.6963 | 0.7081 | 0.7000 | 0.7139 | 0.7003 | 0.7592 | 0.7360 |
+| NR-PPAR-gamma | 0.6448 | 0.6447 | 0.6903 | 0.6633 | **0.7901** | 0.6919 | 0.7469 |
+| SR-ARE | 0.7220 | 0.7357 | 0.6693 | 0.7219 | 0.7180 | 0.6917 | 0.7224 |
+| SR-ATAD5 | 0.6779 | 0.6957 | 0.7080 | 0.7439 | 0.7500 | 0.6787 | 0.7253 |
+| SR-HSE | 0.6551 | 0.6768 | 0.7205 | 0.7619 | 0.7618 | **0.7799** | 0.8047 |
+| SR-MMP | 0.7617 | 0.7773 | 0.8067 | 0.7850 | 0.7940 | 0.7980 | 0.8311 |
+| SR-p53 | 0.6862 | 0.6933 | 0.6941 | 0.7038 | 0.7214 | **0.7622** | 0.7580 |
 
 ### Token Importance Visualisation (ChemBERTa-2)
 
@@ -72,7 +73,10 @@ from the test set for a different assay endpoint.*
 ### Reproducing Tox21 Results
 
 ```bash
-# ChemBERTa-2 (best model)
+# Ensemble (best overall)
+python scripts/ensemble_tox21.py --device cuda
+
+# ChemBERTa-2
 python scripts/train_pretrained_tox21.py \
     --config config/tox21_chemberta_config.yaml --device cuda
 
