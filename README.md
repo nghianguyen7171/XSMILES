@@ -39,8 +39,10 @@ Tasks cover nuclear receptor disruption (NR-\*) and stress-response pathways (SR
 | SMILESGNN (GATv2+Transformer) | 0.7284 | 0.2685 | GNNExplainer / GradCAM (post-hoc) |
 | AttentiveFP | 0.7311 | 0.3164 | GradCAM on intrinsic attention (faithful) |
 | GPS Graph Transformer | 0.7247 | 0.3113 | GINEConv + MultiheadAttention per layer |
+| Uni-Mol (frozen) + MLP | 0.6614 | 0.2446 | 3D pre-trained features (frozen backbone) |
 | MoLFormer-XL | 0.7395 | 0.3529 | Gradient×token importance (faithful) |
 | ChemBERTa-2 | 0.7420 | 0.3174 | Gradient×token importance (faithful) |
+| ChemBERTa-2 + SMILES Aug (TTA K=10) | 0.7390 | 0.3338 | Gradient×token importance (faithful) |
 | Ensemble — simple average (ChemBERTa-2 + MoLFormer-XL + AttentiveFP) | **0.7635** | **0.3820** | — |
 | Ensemble — task-specific weighted | 0.7596 | 0.3515 | — |
 

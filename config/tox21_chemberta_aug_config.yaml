@@ -1,0 +1,29 @@
+model:
+  name: "PretrainedMolPredictor"
+  pretrained_model: "DeepChem/ChemBERTa-77M-MTR"
+  dropout: 0.1
+  num_tasks: 12
+
+training:
+  num_epochs: 60
+  batch_size: 32
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  early_stopping_patience: 15
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+  use_weighted_sampler: true
+  max_length: 128
+  grad_clip: 1.0
+  # SMILES augmentation
+  num_aug_k: 5          # random SMILES variants per molecule during training
+  tta_k: 10             # SMILES variants per molecule at test time (TTA)
+
+data:
+  cache_dir: "data"
+  split_type: "scaffold"
+  seed: 42
+
+output:
+  model_dir: "models/tox21_chemberta_aug_model"
