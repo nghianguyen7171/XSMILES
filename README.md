@@ -48,12 +48,12 @@ Tasks cover nuclear receptor disruption (NR-\*) and stress-response pathways (SR
 | Ensemble-3 — simple average (ChemBERTa-2 + MoLFormer-XL + AttentiveFP) | 0.7635 | 0.3820 | — |
 | Ensemble-3 — task-specific weighted | 0.7596 | 0.3515 | — |
 | Ensemble-5 — all models (simple average) | 0.7661 | 0.3903 | — |
-| **Ensemble-6 best (ChemBERTa-2 + MoLFormer-XL + Pre-trained GIN)** | **0.7821** | **0.4019** | — |
+| **Ensemble-3 best (ChemBERTa-2 + MoLFormer-XL + Pre-trained GIN)** | **0.7821** | **0.4019** | — |
 | Ensemble-6 — all 6 models | 0.7754 | 0.4041 | — |
 
 ### Per-Task AUC-ROC (Test Set)
 
-| Task | ECFP4+XGB | SMILESGNN | AttentiveFP | GPS | ChemBERTa-PubChem | MoLFormer-XL | ChemBERTa-2 | **Pretrained GIN** | Ensemble-5 | **Ensemble-6 Best** |
+| Task | ECFP4+XGB | SMILESGNN | AttentiveFP | GPS | ChemBERTa-PubChem | MoLFormer-XL | ChemBERTa-2 | **Pretrained GIN** | Ensemble-5 | **Ensemble-3 Best** |
 |---|---|---|---|---|---|---|---|---|---|---|
 | NR-AR | 0.7166 | 0.7130 | 0.7148 | 0.7594 | 0.6563 | 0.6917 | 0.7445 | 0.7941 | 0.7024 | **0.7631** |
 | NR-AR-LBD | 0.7954 | 0.8301 | **0.8325** | 0.7911 | 0.6300 | 0.7561 | 0.8103 | 0.7940 | 0.8160 | 0.8039 |
