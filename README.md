@@ -44,26 +44,27 @@ Tasks cover nuclear receptor disruption (NR-\*) and stress-response pathways (SR
 | ChemBERTa-2 | 0.7420 | 0.3174 | Gradient×token importance (faithful) |
 | ChemBERTa-2 + SMILES Aug (TTA K=10) | 0.7390 | 0.3338 | Gradient×token importance (faithful) |
 | ChemBERTa-2 + Uncertainty Weighting | 0.7387 | 0.3068 | Gradient×token importance (faithful) |
+| **Pre-trained GIN (Hu et al. 2020, masking)** | **0.7792** | **0.3765** | GradCAM on pretrained backbone (faithful) |
 | Ensemble-3 — simple average (ChemBERTa-2 + MoLFormer-XL + AttentiveFP) | 0.7635 | 0.3820 | — |
 | Ensemble-3 — task-specific weighted | 0.7596 | 0.3515 | — |
-| **Ensemble-5 — all models (simple average)** | **0.7661** | **0.3903** | — |
+| Ensemble-5 — all models (simple average) | 0.7661 | 0.3903 | — |
 
 ### Per-Task AUC-ROC (Test Set)
 
-| Task | ECFP4+XGB | SMILESGNN | AttentiveFP | GPS | ChemBERTa-PubChem | MoLFormer-XL | ChemBERTa-2 | Ensemble-3 | Ensemble-5 |
+| Task | ECFP4+XGB | SMILESGNN | AttentiveFP | GPS | ChemBERTa-PubChem | MoLFormer-XL | ChemBERTa-2 | **Pretrained GIN** | Ensemble-5 |
 |---|---|---|---|---|---|---|---|---|---|
-| NR-AR | 0.7166 | 0.7130 | 0.7148 | 0.7594 | 0.6563 | 0.6917 | 0.7445 | 0.7467 | 0.7024 |
-| NR-AR-LBD | 0.7954 | 0.8301 | **0.8325** | 0.7911 | 0.6300 | 0.7561 | 0.8103 | 0.8192 | 0.8160 |
-| NR-AhR | 0.8177 | 0.7819 | 0.7970 | 0.7891 | 0.7936 | 0.8003 | 0.8085 | 0.8304 | **0.8429** |
-| NR-Aromatase | 0.7390 | 0.7025 | 0.7149 | 0.7331 | 0.7401 | 0.6892 | 0.7159 | 0.7297 | **0.7628** |
-| NR-ER | 0.7096 | 0.6870 | 0.7246 | 0.6374 | **0.7412** | 0.7016 | 0.6626 | 0.7167 | 0.7159 |
-| NR-ER-LBD | 0.6963 | 0.7081 | 0.7000 | 0.6398 | 0.7139 | 0.7003 | **0.7592** | 0.7394 | 0.7296 |
-| NR-PPAR-gamma | 0.6448 | 0.6447 | 0.6903 | 0.6477 | 0.6633 | **0.7901** | 0.6919 | 0.7335 | 0.7386 |
-| SR-ARE | 0.7220 | **0.7357** | 0.6693 | 0.7045 | 0.7219 | 0.7180 | 0.6917 | 0.7222 | 0.7142 |
-| SR-ATAD5 | 0.6779 | 0.6957 | 0.7080 | 0.7084 | 0.7439 | **0.7500** | 0.6787 | 0.7305 | 0.7464 |
-| SR-HSE | 0.6551 | 0.6768 | 0.7205 | 0.7791 | 0.7619 | 0.7618 | 0.7799 | **0.8105** | 0.8119 |
-| SR-MMP | 0.7617 | 0.7773 | 0.8067 | 0.7685 | 0.7850 | 0.7940 | 0.7980 | **0.8310** | 0.8294 |
-| SR-p53 | 0.6862 | 0.6933 | 0.6941 | 0.7379 | 0.7038 | 0.7214 | 0.7622 | 0.7564 | **0.7833** |
+| NR-AR | 0.7166 | 0.7130 | 0.7148 | 0.7594 | 0.6563 | 0.6917 | 0.7445 | **0.7941** | 0.7024 |
+| NR-AR-LBD | 0.7954 | 0.8301 | **0.8325** | 0.7911 | 0.6300 | 0.7561 | 0.8103 | 0.7940 | 0.8160 |
+| NR-AhR | 0.8177 | 0.7819 | 0.7970 | 0.7891 | 0.7936 | 0.8003 | 0.8085 | 0.8353 | **0.8429** |
+| NR-Aromatase | 0.7390 | 0.7025 | 0.7149 | 0.7331 | 0.7401 | 0.6892 | 0.7159 | **0.7981** | 0.7628 |
+| NR-ER | 0.7096 | 0.6870 | 0.7246 | 0.6374 | **0.7412** | 0.7016 | 0.6626 | 0.6837 | 0.7159 |
+| NR-ER-LBD | 0.6963 | 0.7081 | 0.7000 | 0.6398 | 0.7139 | 0.7003 | **0.7592** | 0.6921 | 0.7296 |
+| NR-PPAR-gamma | 0.6448 | 0.6447 | 0.6903 | 0.6477 | 0.6633 | 0.7901 | 0.6919 | **0.8433** | 0.7386 |
+| SR-ARE | 0.7220 | **0.7357** | 0.6693 | 0.7045 | 0.7219 | 0.7180 | 0.6917 | 0.7183 | 0.7142 |
+| SR-ATAD5 | 0.6779 | 0.6957 | 0.7080 | 0.7084 | 0.7439 | 0.7500 | 0.6787 | **0.7718** | 0.7464 |
+| SR-HSE | 0.6551 | 0.6768 | 0.7205 | 0.7791 | 0.7619 | 0.7618 | 0.7799 | 0.7528 | **0.8119** |
+| SR-MMP | 0.7617 | 0.7773 | 0.8067 | 0.7685 | 0.7850 | 0.7940 | 0.7980 | **0.8503** | 0.8294 |
+| SR-p53 | 0.6862 | 0.6933 | 0.6941 | 0.7379 | 0.7038 | 0.7214 | 0.7622 | **0.8167** | 0.7833 |
 
 ### Token Importance Visualisation (ChemBERTa-2)
 
@@ -100,6 +101,10 @@ python scripts/train_pretrained_tox21.py \
 # ChemBERTa-PubChem
 python scripts/train_pretrained_tox21.py \
     --config config/tox21_chemberta_pubchem_config.yaml --device cuda
+
+# Pre-trained GIN (Hu et al. NeurIPS 2020, masking strategy)
+python scripts/train_pretrained_gin_tox21.py \
+    --config config/tox21_pretrained_gin_config.yaml --device cuda
 
 # 5-model ensemble (best overall)
 python scripts/ensemble5_tox21.py --device cuda
